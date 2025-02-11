@@ -1,0 +1,118 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+  {% block head %} {% include "admin/head.html" %} {% endblock head %}
+
+  <body>
+    <div class="screen-overlay"></div>
+
+    {% block aside %} {% include 'admin/aside.html' %} {% endblock aside %}
+    <main class="main-wrap">
+      {% block header %} {% include "admin/header.html" %} {% endblock header %}
+
+  <section class="content-main">
+    <div class="content-header">
+      <div>
+        <h2 class="content-title card-title">Categories</h2>
+      </div>
+
+      {% if messages %}
+      <div class="alert-container">
+          {% for message in messages %}
+              <div class="alert 
+                          {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% endif %}">
+                  {{ message }}
+              </div>
+          {% endfor %}
+      </div>
+      {% endif %}
+
+      <div>
+        <a href="{% url "add_category" %}" class="btn btn-primary btn-sm rounded">Create Category</a>
+      </div>
+      
+    </div>
+    <div class="card">
+      <div class="card-body">
+          
+
+          <div class="col-md-9">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th class="text-end">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for category in categories %}
+                  <tr>
+                      <td>{{ category.id }}</td>
+                      <td><b>{{ category.name }}</b></td>
+                      <td>{{ category.description }}</td>
+                      <td>
+                          <span class="badge rounded-pill alert-success">Active</span>
+                      </td>
+                      <td class="text-end">
+                        <!-- Link to edit category -->
+                        <a href="{% url 'edit_category' category.id %}" class="btn btn-sm btn-brand rounded font-sm mt-15">Edit</a>
+                        <!-- Delete with confirmation -->
+                        <a href="{% url 'delete_category' category.id %}" 
+                           class="btn btn-sm btn-danger rounded font-sm mt-15" 
+                           onclick="return confirmDelete();">Delete</a>
+                    </td>
+                    
+                  </tr>
+                  {% endfor %}
+              </tbody>
+              </table>
+            </div>
+          </div>
+          <!-- .col// -->
+     
+      </div>
+      <!-- card body .// -->
+    </div>
+    <!-- card .// -->
+  </section>
+
+
+
+      <footer class="main-footer font-xs">
+        <div class="row pb-30 pt-15">
+          <div class="col-sm-6">
+            <script>
+              document.write(new Date().getFullYear());
+            </script>
+            ©, Evara - HTML Ecommerce Template .
+          </div>
+          <div class="col-sm-6">
+            <div class="text-sm-end">All rights reserved</div>
+          </div>
+        </div>
+      </footer>
+    </main>
+
+   
+ 
+ <script>
+      function confirmDelete() {
+          return confirm("Are you sure you want to delete this category?");
+      }
+  </script> 
+  
+
+    {% block scripts %}
+        {% include "admin/scripts.html" %}
+    {% endblock scripts %}
+
+  </body>
+</html>
+
+
+

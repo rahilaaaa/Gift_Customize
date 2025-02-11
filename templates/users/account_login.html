@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE HTML>
+<html lang="en">
+
+    {% block head %}
+        {% include "products/head.html" %}
+    {% endblock head %}
+
+<body>
+
+    {% block topbar %}
+         {% include "users/header_not_search.html" %}
+    {% endblock topbar %}
+
+    <main>
+        <section class="content-main mt-80 mb-80">
+            <div class="card mx-auto card-login" style="max-width: 500px;">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Sign in</h4>
+
+                    <!-- Display messages -->
+                    {% if messages %}
+                        <div>
+                            {% for message in messages %}
+                                <div 
+                                    class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}" 
+                                    role="alert">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Start Form -->
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <input class="form-control" name="email" placeholder="Email" type="email" required>
+                        </div> <!-- form-group// -->
+                        
+                        <div class="mb-3 position-relative">
+                            <input class="form-control" name="password" id="password" placeholder="Password" type="password" required>
+                            <i class="far fa-eye position-absolute" id="togglePassword" style="right: 10px; top: 12px; cursor: pointer;"></i>
+                        </div> <!-- form-group// -->
+                        
+                       
+
+                        <div class="mb-3 text-end">
+                            <a href="{% url 'forgot_password' %}" class="font-sm text-primary">Forgot password?</a>
+                        </div> <!-- form-group// -->
+                        
+                        <div class="mb-3">
+                            <label class="form-check">
+                                <input type="checkbox" class="form-check-input" checked="">
+                                <span class="form-check-label">Remember</span>
+                            </label>
+                        </div> <!-- form-group form-check .// -->
+                        
+                        <div class="mb-4">
+                            <button type="submit" class="btn w-100 custom-btn"> Login </button>
+                        </div> <!-- form-group// -->
+                    </form>
+                    <!-- End Form -->
+
+                    <p class="text-center mb-4">Don't have an account? <a href="{% url 'register' %}">Create account</a></p>
+                </div>
+            </div>
+        </section>                                                                               
+
+    </main>
+    {% block scripts %}
+        {% include "users/scripts.html" %}
+    {% endblock scripts %}
+
+    <style>
+        .custom-btn {
+            background-color: #D19C97;
+            color: #fff;
+            border: none;
+        }
+    
+        .custom-btn:hover {
+            background-color: #b88580;
+            color: #fff;
+        }
+    
+        .custom-btn-light {
+            background-color: #f8f9fa;
+            color: #212529;
+            border: 1px solid #D19C97;
+        }
+    
+        .custom-btn-light:hover {
+            background-color: #e2e6ea;
+            color: #212529;
+        }
+
+        .position-relative {
+            position: relative;
+        }
+        
+        .far.fa-eye {
+            font-size: 18px;
+        }
+    </style>
+
+   
+
+</body>
+
+</html>

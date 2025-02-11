@@ -1,0 +1,233 @@
+{% load static %}
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+{% block head %}
+    {% include "products/head.html" %}
+{% endblock head %}
+
+
+<body>
+
+{% block topbar %}
+
+    {% include "products/topbar.html" %}
+    
+{% endblock topbar %}
+
+{% block navbar %}
+        {% include "products/navbar.html" %}
+    {% endblock navbar %}
+
+
+
+<!-- Product Detail Start -->
+<div class="container-fluid py-5">
+    <div class="row px-xl-5">
+        <!-- Image Section -->
+        <div class="col-lg-5 pb-5">
+            <div id="imageZoomContainer" style="position: relative; width: 100%; height: 400px; overflow: hidden; cursor: zoom-in;">
+                <img id="mainImage" src="{{ product_images.0.image.url }}" alt="Main Image" width="100%" height="100%" style="object-fit: cover; transition: transform 0.2s ease;">
+            </div>
+            <div class="d-flex justify-content-center mt-3">
+                {% for image in product_images %}
+                    <img src="{{ image.image.url }}" alt="Small Image" width="80px" height="80px" onclick="changeImage(this)" class="small-image" style="cursor: pointer;">
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Product Info Section -->
+        <div class="col-lg-7 pb-5">
+            <h3>{{ product.title }}</h3>
+            <div class="d-flex mb-3">
+                <div class="text-primary mr-2">
+                    <small class="fas fa-star"></small>
+                    <small class="fas fa-star"></small>
+                    <small class="fas fa-star"></small>
+                    <small class="fas fa-star-half-alt"></small>
+                    <small class="far fa-star"></small>
+                </div>
+                <small class="pt-1">({{reviews|length }})</small>
+            </div>
+            <h3>${{ product.price }}</h3>
+            <p>{{ product.description }}</p>
+
+            <!-- Sizes Section -->
+        <form action="{% url 'add_to_cart' %}" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div style="padding: 15px; background-color: #f8f9fa; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+                <p style="font-size: 16px; color: #333; font-weight: bold;">Sizes:</p>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    {% for variant in product_variants %}
+                        <label style="font-size: 14px; color: #555; cursor: pointer; padding: 8px 16px; border: 2px solid #007bff; border-radius: 20px; transition: all 0.3s ease;">
+                            <input type="radio" name='size' value="{{ variant.size }}" data-quantity="{{ variant.quantity }}" style="margin-right: 8px; accent-color: #007bff;" onclick="updateAvailability(this)">
+                            {{ variant.size }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+           <!-- Image View Type Dropdown Section -->
+                <div style="padding: 20px; background-color: #f8f9fa; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); margin-top: 20px;">
+                    <p style="font-size: 16px; color: #333; font-weight: bold; margin-bottom: 15px;">Choose Image ViewFlex:</p>
+                    <select name="view-type" id="view-type-dropdown" style="font-size: 14px; padding: 10px 20px; border: 2px solid #007bff; border-radius: 10px; width: 100%; max-width: 300px; background-color: #fff; color: #333; cursor: pointer; transition: all 0.3s ease;">
+                        {% for variant in product_variants %}
+                            {% if variant.viewflex %}
+                                <option value="{{ variant.viewflex }}" {% if forloop.first %}selected{% endif %}>
+                                    {{ variant.viewflex }}
+                                </option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+
+
+            
+            <!-- Upload Image Section -->
+            <div class="d-flex mb-4" style="margin-top: 20px;">
+                <p class="text-dark font-weight-medium mb-0 mr-3">Upload Image:</p>
+                
+                
+                    <div class="custom-file">
+                        <input type="file" class="custom-file-input" id="upload-image" name="image" style="cursor: pointer;" required>
+                        <label class="custom-file-label" for="upload-image">Choose image</label>
+                    </div>
+            </div>
+
+            <!-- Quantity and Add to Cart Section -->
+            <div class="d-flex align-items-center mb-4 pt-2">
+                <div class="input-group quantity mr-3" style="width: 130px;">
+                    <div class="input-group-btn">
+                        <button type="button" class="btn btn-primary btn-minus" onclick="decreaseQuantity()">
+                            <i class="fa fa-minus"></i>
+                        </button>
+                    </div>
+                    <input type="text" 
+                        class="form-control bg-secondary text-center" 
+                        id="quantity" 
+                        name="quantity" 
+                        value="1">
+                    <div class="input-group-btn">
+                        <button type="button" class="btn btn-primary btn-plus" onclick="increaseQuantity()">
+                            <i class="fa fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <input type="hidden" name="size" id="selectedSize" value="{{ selected_size }}">
+                <input type="hidden" name="category" value="{{ product.category.name }}">
+                <button type="submit" class="btn btn-primary mt-1">Add To Cart</button>
+        
+            </div>
+        </form>
+                
+            <!-- Availability Section -->
+            <div id="availabilitySection">
+                <h6>Availability: <span id="availabilityMessage"></span></h6>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product Detail End -->
+
+
+<!-- Reviews Section -->
+{% block review %}
+    {% include "products/review.html" %}
+{% endblock review %}
+
+  
+{% block related_product %}
+    {% include "products/related_products.html" %}
+{% endblock related_product %}
+ 
+
+    {% block footer %}
+        {% include "products/footer.html" %}
+    {% endblock footer %}
+
+
+
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-primary back-to-top"><i class="fa fa-angle-double-up"></i></a>
+    {% include "products/script.html" %}
+
+    
+
+    
+    
+   
+    
+
+</body>
+
+</html>  
+
+<script>
+    // Change image on thumbnail click
+    function changeImage(imageElement) {
+        document.getElementById("mainImage").src = imageElement.src;
+    }
+
+
+        // Update quantity and availability message when a size is selected
+        function updateAvailability(inputElement) {
+            const quantity = inputElement.getAttribute('data-quantity'); // Get the quantity from the clicked variant
+            const availabilityMessage = document.getElementById('availabilityMessage');
+    
+            // Update the availability message
+            if (quantity > 0) {
+                availabilityMessage.textContent = `Only ${quantity} items left in stock`; // Use backticks for template literals
+                availabilityMessage.style.color = 'red';
+            } else {
+                availabilityMessage.textContent = 'Out of stock';
+                availabilityMessage.style.color = 'grey';
+            }
+        }
+
+   
+        document.getElementById("upload-image").addEventListener("change", function() {
+                // Get the file name from the input
+                const fileName = this.files[0]?.name || "Choose image";
+                
+                // Update the label text
+                const label = this.nextElementSibling; // The corresponding label for the input
+                label.textContent = fileName;
+        });
+
+        {% comment %} document.getElementById("addToCartButton").addEventListener("click", function () {
+            const productID = "{{ product.id }}";
+            const variantID = document.querySelector('input[name="size"]:checked')?.value || null;
+            const quantity = document.getElementById("quantity").value;
+    
+            fetch("{% url 'add_to_cart' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify({
+                    product_id: productID,
+                    variant_id: variantID,
+                    quantity: quantity
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message || "Added to cart!");
+            })
+            .catch(error => {
+                console.error("Error adding to cart:", error);
+            });
+        });
+        {% endcomment %}
+    
+    
+    
+</script>

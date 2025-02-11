@@ -1,0 +1,58 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+{% block head %}
+    {% include "products/head.html" %}
+{% endblock head %}
+
+
+<body>
+
+{% block topbar %}
+
+    {% include "products/topbar.html" %}
+    
+{% endblock topbar %}
+
+{% block navbar %}
+        {% include "products/navbar.html" %}
+    {% endblock navbar %}
+
+<!-- Product Detail Start -->
+
+<!-- Product Detail End -->
+
+
+
+    {% block footer %}
+        {% include "products/footer.html" %}
+    {% endblock footer %}
+
+
+
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-primary back-to-top"><i class="fa fa-angle-double-up"></i></a>
+
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js"></script>
+    <script src="lib/easing/easing.min.js"></script>
+    <script src="lib/owlcarousel/owl.carousel.min.js"></script>
+
+    <!-- Contact Javascript File -->
+    <script src="mail/jqBootstrapValidation.min.js"></script>
+    <script src="mail/contact.js"></script>
+
+    <!-- Template Javascript -->
+    <script src="js/main.js"></script>
+    <script src="{% static 'js/change_image.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/quantity.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/zoom.js' %}" type="text/javascript"></script>
+ 
+
+</body>
+
+</html>  

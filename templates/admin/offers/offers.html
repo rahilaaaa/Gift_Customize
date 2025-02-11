@@ -1,0 +1,101 @@
+{% block head %}
+    {% include "admin/head.html" %}
+{% endblock head %}
+
+<body>       
+    <div class="screen-overlay"></div>
+   
+        
+    {% block aside %}
+        {% include 'admin/aside.html' %}
+    {% endblock aside %}
+    
+    {% block header %}
+    {% include "admin/header.html" %}
+{% endblock header %}
+
+    <main class="main-wrap">
+        <section class="content-main">
+            <div class="content-header">
+                <div>
+                    <h2 class="content-title card-title">Offers</h2>
+                </div>
+                <div>
+                    <a class="btn btn-primary btn-sm rounded" href="{% url 'create_product_offers' %}">Create Product Offer</a>
+                    <a class="btn btn-primary btn-sm rounded" href="{% url 'create_category_offers' %}">Create Category Offer</a>
+                </div>
+            </div>
+        
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Status</th>
+                                            <th>Product/Category Name</th>
+                                            <th>Offer</th>
+                                            <th>Description</th>
+                                            <th>Type</th>
+                                            <th>Offer Percentage</th>
+                                            <th>Update</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for offer in offers %}
+                                        <tr>
+                                            <td>
+                                                {% if offer.status == 'active' %}
+                                                    <span class="badge badge-pill badge-soft-success">Active</span>
+                                                {% else %}
+                                                    <span class="badge badge-pill badge-soft-danger">Blocked</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if offer.offer_type == 'product' %}
+                                                    {{ offer.content_object.title }} <!-- Product Name -->
+                                                {% else %}
+                                                    {{ offer.content_object.name }} <!-- Category Name -->
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ offer.offer_name }}</td>
+                                            <td>{{ offer.offer_description }}</td>
+                                            <td>
+                                                <input type="text" style="width: 100px;" class="form-control" value="{{ offer.get_offer_type_display }}" readonly>
+                                            </td>
+                                            <td>{{ offer.offer_percentage }}</td>
+                                            <td>
+                                                <a href="{% url 'edit_offers' offer.id %}" class="btn btn-success">Edit</a>
+                                            </td>
+                                            <td>
+                                                <form action="{% url 'apply_offer' offer.id %}" method="POST">
+                                                    {% csrf_token %}
+                                                    {% if offer.status == 'active' %}
+                                                        <button type="submit" class="btn btn-danger btn-sm">Remove Offer</button>
+                                                    {% else %}
+                                                        <button type="submit" class="btn btn-primary btn-sm">Apply Offer</button>
+                                                    {% endif %}
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                        
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div> <!-- .col// -->
+                    </div> <!-- .row // -->
+                </div> <!-- card body .// -->
+            </div> <!-- card .// -->
+        </section>
+        
+   

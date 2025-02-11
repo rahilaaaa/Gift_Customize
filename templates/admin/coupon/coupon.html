@@ -1,0 +1,129 @@
+{% block head %}
+    {% include "admin/head.html" %}
+{% endblock head %}
+
+<body>       
+    <div class="screen-overlay"></div>
+   
+        
+    {% block aside %}
+        {% include 'admin/aside.html' %}
+    {% endblock aside %}
+
+   
+
+    <main class="main-wrap">
+      {% block header %}
+      {% include "admin/header.html" %}
+      {% endblock header %}
+  
+    <section class="content-main">
+        <div class="content-header">
+          <div>
+              <h2 class="content-title card-title">Coupon List</h2>
+          </div>
+          
+
+          <div>
+              <a href="{% url "create_coupon" %}" class="btn btn-primary btn-sm rounded">Create Coupon</a>
+          </div>
+      </div>
+      
+          {% if messages %}
+          <div class="alert-container">
+              {% for message in messages %}
+                  <div class="alert 
+                              {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% endif %}">
+                      {{ message }}
+                  </div>
+              {% endfor %}
+          </div>
+          {% endif %}
+      
+          <div class="card mb-4">
+              <div class="card-body">
+                  <div class="table-responsive">
+                      <table class="table table-hover">
+                          <thead>
+                              <tr>
+                                  <th>Code</th>
+                                  <th>Discount Type</th>
+                                  <th>Discount Value</th>
+                                  <th>Valid From</th>
+                                  <th>Valid To</th>
+                                  <th>Max Uses</th>
+                                  <th>Total Uses</th>
+                                  <th>Status</th>
+                                  <th>Actions</th>
+                                  <th></th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              {% for coupon in coupons %}
+                              <tr>
+                                  <td>{{ coupon.code }}</td>
+                                  <td>{{ coupon.get_discount_type_display }}</td>
+                                  <td>
+                                      {% if coupon.discount_type == 'percent' %}
+                                          {{ coupon.discount_value }}%
+                                      {% else %}
+                                          ${{ coupon.discount_value }}
+                                      {% endif %}
+                                  </td>
+                                  <td>{{ coupon.valid_from }}</td>
+                                  <td>{{ coupon.valid_to }}</td>
+                                  <td>{{ coupon.max_uses }}</td>
+                                  <td>{{ coupon.total_uses }}</td>
+                                  <td>
+                                      {% if coupon.active %}
+                                          <span class="badge bg-success">Active</span>
+                                      {% else %}
+                                          <span class="badge bg-danger">Expired</span>
+                                      {% endif %}
+                                  </td>
+                                  
+                                  <td>
+                                      <a href="{% url 'edit_coupon' coupon.id %}" class="btn btn-sm btn-primary">Edit</a>
+                                      
+                                  </td>
+                                  <td>
+                                    <a href="{% url 'delete_coupon' coupon.id %}" class="btn btn-sm btn-danger">Delete</a>
+                                  </td>
+                              </tr>
+                              {% empty %}
+                              <tr>
+                                  <td colspan="9" class="text-center">No coupons found.</td>
+                              </tr>
+                              {% endfor %}
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+          </div>
+    </section>
+
+
+    <style>
+        .table-responsive {
+            overflow-x: auto;
+        }
+        .table-hover tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+        .badge {
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .bg-success {
+            background-color: #28a745;
+        }
+        .bg-danger {
+            background-color: #dc3545;
+        }
+    </style>
+            
+    
+
+
+        
+ 

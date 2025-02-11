@@ -1,0 +1,53 @@
+<!-- users/profile/address_list.html -->
+<div class="card border-secondary mb-4">
+
+     
+
+    <div class="card-header bg-secondary text-white">
+        <h4 class="m-0">Your Addresses</h4>
+    </div>
+    <div class="card-body">
+        <a href=" {% url 'add_address' %}" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+            Add New Address
+        </a>
+
+        <!-- Address List -->
+        <div class="row mt-3">
+            {% for address in addresses %}
+            <div class="col-md-6">
+                <div class="card border-primary mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title"><strong>{{ address.name }}</strong></h5>
+                        <p>{{ address.street }}<br>{{ address.city }}, {{ address.state }}, {{ address.country }}</p>
+                        <p><strong>Pin:</strong> {{ address.pincode }}</p>
+                        <p><strong>Mobile:</strong> {{ address.mobile }}</p>
+                        <a href="{% url 'edit_address' address.id %}" class="btn btn-warning btn-sm">Edit</a>
+                        <a href="{% url 'delete_address' address.id %}" class="btn btn-danger btn-sm">Remove</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p>No addresses found.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Address Modal -->
+<div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAddressModalLabel">Add New Address</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary">Save Address</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

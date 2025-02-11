@@ -1,0 +1,103 @@
+{% load custom_filters %}
+
+<div class="row px-xl-5">
+    <div class="col">
+        <div class="nav nav-tabs justify-content-center border-secondary mb-4">
+            <a class="nav-item nav-link active" id="review-tab" href="#">Reviews ({{ reviews|length }})</a>
+        </div>
+        <div class="tab-content" id="review-content" style="display: none;">
+            <!-- Reviews Section -->
+            <div class="row">
+                <div class="col-md-6">
+                    <h4 class="mb-4">{{ reviews|length }} review{% if reviews|length != 1 %}s{% endif %} for "{{ product.title }}"</h4>
+                    <div id="review-list">
+                        {% for review in reviews %}
+                            <div class="media mb-4">
+                                <div class="media-body">
+                                    <h6>{{ review.name }}<small> - <i>{{ review.created_at|date:"d M Y" }}</i></small></h6>
+                                    <div class="text-primary mb-2">
+                                        {% for i in 5|star_range %}
+                                            <i class="{% if i < review.rating %}fas fa-star{% else %}far fa-star{% endif %}"></i>
+                                        {% endfor %}
+                                    </div>
+                                    <p>{{ review.review_text }}</p>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p>No reviews yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h4 class="mb-4">Leave a review</h4>
+                  
+                    <form id="review-form">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="review_text">Your Review *</label>
+                            <textarea id="review_text" name="review_text" cols="30" rows="5" class="form-control"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="name">Your Name *</label>
+                            <input type="text" class="form-control" id="name" name="name">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Your Email *</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+                        <div class="form-group">
+                            <label for="rating">Your Rating *</label>
+                            <select id="rating" name="rating" class="form-control">
+                                {% for i in "12345" %}
+                                    <option value="{{ i }}">{{ i }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group mb-0">
+                            <input type="submit" value="Leave Your Review" class="btn btn-primary px-3">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    
+    document.getElementById("review-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        fetch("{% url 'submit_review' product.id %}", {
+            method: "POST",
+            headers: { 
+                "X-CSRFToken": "{{ csrf_token }}", 
+                "X-Requested-With": "XMLHttpRequest" 
+            },
+            body: formData,
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.success) {
+                const reviewList = document.getElementById("review-list");
+                const newReview = `
+                    <div class="media mb-4">
+                        <div class="media-body">
+                            <h6>${data.review.name}<small> - <i>${data.review.created_at}</i></small></h6>
+                            <div class="text-primary mb-2">
+                                ${"★".repeat(data.review.rating)}
+                            </div>
+                            <p>${data.review.review_text}</p>
+                        </div>
+                    </div>`;
+                reviewList.innerHTML = newReview + reviewList.innerHTML;
+                this.reset();
+            } else {
+                alert(data.error || "Something went wrong!");
+            }
+        });
+    });
+
+
+</script>

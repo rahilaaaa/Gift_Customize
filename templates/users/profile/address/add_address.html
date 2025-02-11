@@ -1,0 +1,87 @@
+{% comment %} <section class="pt-150 pb-150">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 m-auto">
+                <div class="row align-items-center justify-content-center">
+<div class="col-lg-6">
+    <div class="login_wrap widget-taber-content p-30 background-white border-radius-5">
+        <div class="padding_eight_all bg-white">
+            <div class="heading_s1">
+                 <h3 class="mb-30">Enter your shipping address</h3>
+            </div>
+<form action="/profile/address/add" method="post" onsubmit="return validateForm()">
+<label for="name">Name:</label>
+<input name="name" type="text" id="name" required="" onfocusout="validateUsername()">
+<div id="username-error" class="text-danger"></div>
+
+<label for="mobile">Mobile Number:</label> 
+<input name="mno" type="tel" id="mobile" required="" onfocusout="validateMobile()"> 
+<div id="mobile-error" class="text-danger"></div>
+
+<label for="country">Country:</label>
+<input name="country" type="text" id="country" required="" onfocusout="validateCountry()">
+<div id="country-error" class="text-danger"></div>
+
+<label for="state">State:</label>
+<input name="state" type="text" id="state" required="" onfocusout="validateState()">
+<div id="state-error" class="text-danger"></div>
+
+<label for="city">City:</label>
+<input name="city" type="text" id="city" required="" onfocusout="validateCity()">
+<div id="city-error" class="text-danger"></div>
+
+<label for="street">Street Address:</label> 
+<input name="street" type="text" id="street" required="" onfocusout="validateStreet()">
+<div id="street-error" class="text-danger"></div>
+
+<label for="pincode">Pincode:</label>
+<input name="pincode" type="text" id="pincode" required="" onfocusout="validatePincode()">
+<div id="pincode-error" class="text-danger"></div>
+
+<button type="submit" name="submit">Submit Address</button> </form>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section> {% endcomment %}
+{% block head %}
+    {% include "products/head.html" %}
+{% endblock head %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-secondary">
+                <div class="card-header bg-secondary text-white text-center">
+                    <h3 class="mb-0">Add New Address</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            {% for field in form %}
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ field.id_for_label }}" class="form-label fw-bold">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.errors %}
+                                    <div class="text-danger small mt-1">{{ field.errors }}</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="bi bi-check-circle"></i> Save Address
+                            </button>
+                            <a href="{% url 'profile' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

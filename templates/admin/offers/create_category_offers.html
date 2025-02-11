@@ -1,0 +1,98 @@
+{% block head %}
+    {% include "admin/head.html" %}
+{% endblock head %}
+
+<body>       
+    <div class="screen-overlay"></div>
+   
+        
+    {% block aside %}
+        {% include 'admin/aside.html' %}
+    {% endblock aside %}
+
+    <main class="main-wrap">
+
+        
+    {% block header %}
+        {% include "admin/header.html" %}
+    {% endblock header %}
+
+    <section class="content-main">
+        <div class="row">
+            <div class="col-9">
+                <div class="content-header">
+                    <h2 class="content-title">Add New Category Offer</h2>
+                </div>
+    
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+                
+            </div>
+            <div class="col-lg-9">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Offer Details</h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="productAdd" method="post" action="{% url 'create_category_offers' %}">
+                            {% csrf_token %}
+                            <div class="mb-4">
+                                <label class="form-label">Choose Category</label>
+                                <select id="categorySelect" name="category" class="form-select">
+                                    <option value="">Select</option>
+                                    {% for category in categories %}
+                                        <option value="{{ category.id }}" 
+                                            {% if request.POST.category == category.id|stringformat:"s" %}selected{% endif %}>
+                                            {{ category.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% if errors.category %}
+                                    <div class="text-danger mt-2">{{ errors.category }}</div>
+                                {% endif %}
+                            </div>
+    
+                            <div class="mb-4">
+                                <label class="form-label">Offer Name</label>
+                                <input type="text" name="offerName" id="offerName" 
+                                       class="form-control" value="{{ request.POST.offerName }}">
+                                {% if errors.offerName %}
+                                    <div class="text-danger mt-2">{{ errors.offerName }}</div>
+                                {% endif %}
+                            </div>
+    
+                            <div class="mb-4">
+                                <label class="form-label">Offer Description</label>
+                                <input type="text" id="description" name="description" 
+                                       class="form-control" value="{{ request.POST.description }}">
+                                {% if errors.description %}
+                                    <div class="text-danger mt-2">{{ errors.description }}</div>
+                                {% endif %}
+                            </div>
+    
+                            <div class="mb-4">
+                                <label class="form-label">Offer Percentage</label>
+                                <input type="number" id="Percentage" name="offerPercentage" 
+                                       class="form-control" step="0.01" min="0" max="100"
+                                       value="{{ request.POST.offerPercentage }}">
+                                {% if errors.percentage %}
+                                    <div class="text-danger mt-2">{{ errors.percentage }}</div>
+                                {% endif %}
+                            </div>
+    
+                            <div class="mb-4">
+                                <label class="form-label">Offer Type</label>
+                                <input type="text" value="category" name="offerType" 
+                                       class="form-control" readonly>
+                            </div>
+    
+                            <button class="btn btn-primary" type="submit">Save</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>

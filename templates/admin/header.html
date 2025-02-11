@@ -1,0 +1,21 @@
+{% load static %}
+<header class="main-header navbar">
+    <div class="col-nav ms-auto">
+        <button class="btn btn-icon btn-mobile me-auto" data-trigger="#offcanvas_aside"> <i class="material-icons md-apps"></i> </button>
+        <ul class="nav">
+            
+            {% if user.is_authenticated and user.is_superuser %}
+            <li class="nav-item">
+                <a class="nav-link btn-icon darkmode" href="#"> <i class="material-icons md-nights_stay"></i> </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="{% url 'logout' %}">Logout</a>
+            </li>
+        {% endif %}
+        
+           
+           
+        </ul>
+    </div>
+</header>

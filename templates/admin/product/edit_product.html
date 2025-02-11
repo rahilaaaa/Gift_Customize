@@ -1,0 +1,193 @@
+{% load static %}
+{% block head %}
+    {% include "admin/head.html" %}
+{% endblock head %}
+
+<body>
+    <div class="screen-overlay"></div>
+
+    {% block aside %}
+        {% include 'admin/aside.html' %}
+    {% endblock aside %}
+
+    <main class="main-wrap">
+        {% block header %}
+            {% include "admin/header.html" %}
+        {% endblock header %}
+
+        <section class="content-main">
+            <form method="post" enctype="multipart/form-data">
+                <div class="row">
+                    {% csrf_token %}
+                    <div class="col-9">
+                        <div class="content-header">
+                            <h2 class="content-title">Edit Product</h2>
+                        </div>
+                    </div>
+
+                    {% if messages %}
+                    <div class="alert-container">
+                        {% for message in messages %}
+                            <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %} 
+
+                    <div class="col-lg-6">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="mb-4">
+                                    <label for="product_title" class="form-label">Product title</label>
+                                    <input type="text" placeholder="Type here" name="title" class="form-control" id="product_title" value="{{ product.title }}" required>
+                                </div>
+
+                                <!-- Dynamic Variant Fields -->
+                                <div id="category-variants">
+                                    {% for variant in variants %}
+                                    <div class="row gx-3">
+                                        {% if category.name == "wallet" %}
+                                        <div class="col-md-6 mb-3">
+                                            <label for="product_charmImg{{ forloop.counter }}" class="form-label">Charm Image {{ forloop.counter }}</label>
+                                            <input type="file" class="form-control" id="product_charmImg{{ forloop.counter }}" name="charmImg{{ forloop.counter }}">
+                                            {% if variant.charmImg %}
+                                            <img src="{{ variant.charmImg.url }}" alt="Charm Image {{ forloop.counter }}" style="max-width: 35%; max-height: 80px;">
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="product_charm{{ forloop.counter }}" class="form-label">Charm {{ forloop.counter }}</label>
+                                            <input type="text" placeholder="Type here" class="form-control" id="product_charm{{ forloop.counter }}" name="charm{{ forloop.counter }}" value="{{ variant.charm }}">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="product_color{{ forloop.counter }}" class="form-label">Color {{ forloop.counter }}</label>
+                                            <input type="text" placeholder="Type here" class="form-control" id="product_color{{ forloop.counter }}" name="color{{ forloop.counter }}" value="{{ variant.color }}">
+                                        </div>
+                                        {% elif category.name == "3d_crystal" %}
+                                        <div class="col-md-6 mb-3">
+                                            <label for="product_size{{ forloop.counter }}" class="form-label">Size {{ forloop.counter }}</label>
+                                            <input type="text" placeholder="Type here" class="form-control" id="product_size{{ forloop.counter }}" name="size{{ forloop.counter }}" value="{{ variant.size }}">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="product_viewFlex{{ forloop.counter }}" class="form-label">ViewFlex {{ forloop.counter }}</label>
+                                            <input type="text" placeholder="Type here" class="form-control" id="product_viewFlex{{ forloop.counter }}" name="viewFlex{{ forloop.counter }}" value="{{ variant.view_flex }}">
+                                        </div>
+                                        {% elif category.name == "water_bottle" %}
+                                        <div class="col-md-6 mb-3">
+                                            <label for="product_size{{ forloop.counter }}" class="form-label">Liter {{ forloop.counter }}</label>
+                                            <input type="text" placeholder="Type here" class="form-control" id="product_size{{ forloop.counter }}" name="liter{{ forloop.counter }}" value="{{ variant.liter }}">
+                                        </div>
+                                        {% endif %}
+                                        <div class="col-md-6 mb-3">
+                                            <label for="product_quantity{{ forloop.counter }}" class="form-label">Quantity {{ forloop.counter }}</label>
+                                            <input type="number" class="form-control" id="product_quantity{{ forloop.counter }}" name="quantity{{ forloop.counter }}" value="{{ variant.quantity }}">
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+
+                                <!-- Priority Field -->
+                                <div class="mb-3">
+                                    <label for="product_priority" class="form-label">Priority</label>
+                                    <select class="form-control" name="priority" id="product_priority" required>
+                                        <option value="low" {% if product.priority == 'low' %}selected{% endif %}>Low</option>
+                                        <option value="medium" {% if product.priority == 'medium' %}selected{% endif %}>Medium</option>
+                                        <option value="high" {% if product.priority == 'high' %}selected{% endif %}>High</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div> <!-- card end// -->
+
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div>
+                                    <label class="form-label">Description</label>
+                                    <textarea placeholder="Type here" name="description" class="form-control" rows="4" required>{{ product.description }}</textarea>
+                                </div>
+                            </div>
+                        </div> <!-- card end// -->
+
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <!-- Image Upload and Preview Section -->
+                                {% for image in images %}
+                                <div>
+                                    <label class="form-label">Image {{ forloop.counter }}</label>
+                                    <input class="form-control" name="image{{ forloop.counter }}" type="file" accept="image/*" onchange="previewImage(event, 'preview{{ forloop.counter }}')">
+                                    <div id="preview{{ forloop.counter }}" class="image-preview">
+                                        <img src="{{ image.image.url }}" class="img-preview" alt="Image Preview" style="max-width: 100%; max-height: 200px;">
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button class="btn btn-fill-out btn-block hover-up btn-primary" type="submit" name="submit">Update Product</button>
+                        </div> <!-- card end// -->
+                    </div>
+
+                    <div class="col-lg-3">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="mb-4">
+                                    <label class="form-label">Price</label>
+                                    <input type="text" name="price" placeholder="Type here" class="form-control" value="{{ product.price }}" required>
+                                </div>
+                            </div>
+                        </div> <!-- card end// -->
+                    </div>
+                </div>
+            </form>
+        </section>
+                
+        <!-- Include the same JavaScript and CSS as add_product.html -->
+        <script src="{% static 'js/product-variants.js' %}" type="text/javascript"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+        <script>
+            // Function to preview uploaded images
+            function previewImage(event, previewId) {
+                const file = event.target.files[0];
+                const preview = document.getElementById(previewId);
+        
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        preview.innerHTML = `<img src="${e.target.result}" class="img-preview" alt="Image Preview" style="max-width: 100%; max-height: 200px;">`;
+                        initializeCropper(preview.querySelector('img'));
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    preview.innerHTML = '';
+                }
+            }
+        
+            // Function to initialize Cropper.js
+            function initializeCropper(imageElement) {
+                new Cropper(imageElement, {
+                    aspectRatio: 1, // Set aspect ratio (1:1 for square)
+                    viewMode: 1, // Restrict crop box to the image size
+                    autoCropArea: 1, // Automatically crop the entire image
+                    responsive: true,
+                    crop(event) {
+                        // You can access cropping data here if needed
+                        console.log(event.detail.x);
+                        console.log(event.detail.y);
+                        console.log(event.detail.width);
+                        console.log(event.detail.height);
+                    },
+                });
+            }
+        </script>
+        
+        <style>
+            .image-preview {
+                margin-top: 10px;
+            }
+        
+            .img-preview {
+                border: 1px solid #ddd;
+                padding: 5px;
+                border-radius: 4px;
+            }
+        </style>
+    </main>
+</body>

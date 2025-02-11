@@ -1,0 +1,32 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('home/', views.admin, name='dashboard'),
+    path('reviews/', views.reviews, name='reviews'),
+    path('review_details/<int:review_id>/', views.review_details, name='review_details'),
+    path('products/', views.products, name='products'),
+    path('add_products/', views.add_products, name='add_products'),
+    path('orders_list/', views.orders_list, name='orders_list'),
+    path('orders_details/', views.order_details, name='order_details'),
+    path('categories/', views.categories, name='categories'),
+    path('categories/add_category/', views.add_category, name='add_category'),
+    path('categories/edit_category/<int:category_id>/', views.edit_category, name='edit_category'),
+    path('delete_category/<int:category_id>/', views.delete_category, name='delete_category'),
+    path('coupon/', views.coupon, name='coupon'),
+    path('coupon/create_coupon/', views.create_coupon, name='create_coupon'),
+    path('coupons/edit/<int:coupon_id>/', views.edit_coupon, name='edit_coupon'),
+    path('coupons/delete/<int:coupon_id>/', views.delete_coupon, name='delete_coupon'),
+    path('offers/', views.offer, name='offers'),
+    path('offer/apply/<str:offer_id>/', views.apply_offer, name='apply_offer'),
+    path('edit-offers/<int:offer_id>/', views.edit_offers, name='edit_offers'),
+    path('offers/create_product_offers', views.create_product_offers, name='create_product_offers'),
+    path('offers/create_category_offers', views.create_category_offers, name='create_category_offers'),
+    path('user_list/',views.userlist, name='user_list'),
+    path('users/block/<int:user_id>/', views.block_user, name='block_user'),
+    path('users/unblock/<int:user_id>/', views.unblock_user, name='unblock_user'),
+    path('', views.login, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    path('product/edit/<int:product_id>/', views.edit_product, name='edit_product'),
+    path('product/delete/<int:product_id>/', views.delete_product, name='delete_product'),
+]

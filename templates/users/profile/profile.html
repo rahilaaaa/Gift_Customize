@@ -1,0 +1,98 @@
+
+{% block head %}
+    {% include "products/head.html" %}
+{% endblock head %}
+
+
+<body>
+
+    {% block topbar %}
+
+    {% include "products/topbar.html" %}
+    
+{% endblock topbar %}
+
+{% comment %} {% block not_search %}
+
+    {% include "users/header_not_search.html" %}
+   
+
+    
+{% endblock not_search %} {% endcomment %}
+
+
+{% block navbar %}
+        {% include "products/navbar.html" %}
+    {% endblock navbar %}
+
+    <div class="container-fluid py-5">
+        
+
+        <div class="row">
+            <!-- Sidebar Menu -->
+            <div class="col-md-3">
+                <div class="card border-secondary mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h4 class="m-0">Dashboard Menu</h4>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action active">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <i class="bi bi-bag"></i> Orders
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <i class="bi bi-wallet2"></i> Wallet
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action" id="my-address-link">
+                            <i class="bi bi-geo-alt"></i> My Address
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <i class="bi bi-person-circle"></i> Account Details
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <i class="bi bi-person-plus"></i> Referral
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <i class="bi bi-cash-stack"></i> Transaction
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action text-danger">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Profile Content -->
+            <div class="col-md-9">
+                <div id="address-list-content" style="display: none;">
+                    {% include "users/profile/address/address_list.html" %}
+                </div>
+                <div id="default-profile-content">
+                    <div class="card border-secondary mb-4">
+                        <div class="card-header bg-secondary text-white">
+                            <h4 class="m-0">Hello Pogoti!</h4>
+                        </div>
+                        <div class="card-body">
+                            <p>From your account dashboard, you can view your <strong>orders</strong>, manage <strong>addresses</strong>, and update your <strong>account details</strong>.</p>
+                            <a href="#" class="btn btn-primary ">Update Profile</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('my-address-link').addEventListener('click', function(event) {
+            event.preventDefault();
+    
+            // Hide the default profile content
+            document.getElementById('default-profile-content').style.display = 'none';
+    
+            // Show the address list content
+            document.getElementById('address-list-content').style.display = 'block';
+        });
+    </script>
+    

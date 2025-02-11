@@ -1,0 +1,75 @@
+{% block head %}
+    {% include "admin/head.html" %}
+{% endblock head %}
+
+<body>       
+    <div class="screen-overlay"></div>
+   
+        
+    {% block aside %}
+        {% include 'admin/aside.html' %}
+    {% endblock aside %}
+
+    <main class="main-wrap">
+
+        
+    {% block header %}
+        {% include "admin/header.html" %}
+    {% endblock header %}
+    <section class="content-main">
+        <div class="row">
+            <div class="col-9">
+                <div class="content-header">
+                    <h2 class="content-title">Edit Offer</h2>
+                </div>
+            </div>
+            <div class="col-lg-9">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4>Offer Details</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'edit_offers' offer.id %}">
+                            {% csrf_token %}
+                            <div class="mb-4">
+                                <label class="form-label">Product/Category Name</label> <br>
+                                <input type="text" value="
+                                    {% if offer.offer_type == 'product' %}
+                                        {{ related_object.title }}
+                                    {% else %}
+                                        {{ related_object.name }}
+                                    {% endif %}
+                                " class="form-control" readonly>
+                            </div>
+    
+                            <div class="mb-4">
+                                <label class="form-label">Offer Name</label>
+                                <input type="text" id="offerName" name="offerName" value="{{ offer.offer_name }}" class="form-control">
+                                {% if errors.offerName %}
+                                    <div class="text-danger" id="error-offerName">{{ errors.offerName }}</div>
+                                {% endif %}
+                            </div>
+    
+                            <div class="mb-4">
+                                <label class="form-label">Offer Description</label>
+                                <input type="text" id="description" name="description" value="{{ offer.offer_description }}" class="form-control">
+                                {% if errors.description %}
+                                    <div class="text-danger" id="error-description">{{ errors.description }}</div>
+                                {% endif %}
+                            </div>
+    
+                            <div class="mb-4">
+                                <label class="form-label">Offer Percentage</label>
+                                <input type="text" id="percentage" name="offerPercentage" value="{{ offer.offer_percentage }}" class="form-control">
+                                {% if errors.percentage %}
+                                    <div class="text-danger" id="error-percentage">{{ errors.percentage }}</div>
+                                {% endif %}
+                            </div>
+    
+                            <button class="btn btn-primary" type="submit">Save</button>
+                        </form>
+                    </div>
+                </div> <!-- card end// -->
+            </div>
+        </div>
+    </section>

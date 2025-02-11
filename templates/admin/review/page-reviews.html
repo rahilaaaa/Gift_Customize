@@ -1,0 +1,146 @@
+<!DOCTYPE HTML>
+<html lang="en">
+{% load static %}
+{% load custom_tags %}
+
+
+
+
+
+{% block head %}
+    {% include "admin/head.html" %}
+{% endblock head %}
+
+<body>       
+    <div class="screen-overlay"></div>
+   
+        
+    {% block aside %}
+        {% include 'admin/aside.html' %}
+    {% endblock aside %}
+
+    <main class="main-wrap">
+
+        
+    {% block header %}
+        {% include "admin/header.html" %}
+    {% endblock header %}
+
+    <section class="content-main">
+        <div class="content-header">
+            <div>
+                <h2 class="content-title card-title">Reviews</h2>
+            </div>
+        </div>
+    
+        <div class="card mb-4">
+            <header class="card-header">
+                <div class="row gx-3">
+                    <div class="col-lg-4 col-md-6 me-auto">
+                        <!-- Search form -->
+                        <form method="get" action="{% url 'reviews' %}">
+                            <input type="text" name="search" placeholder="Search..." class="form-control" value="{{ search_query }}">
+                        </form>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#ID</th>
+                                <th>Product</th>
+                                <th>Name</th>
+                                <th>Rating</th>
+                                <th>Date</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for review in reviews %}
+                                <tr>
+                                    <td>{{ review.id }}</td>
+                                    <td><b>{{ review.product }}</b></td>
+                                    <td>{{ review.name }}</td>
+                                    <td>
+                                        <ul class="rating-stars">
+                                            {% for star in review.filled_stars %}
+                                                <li class="star filled">
+                                                    <img src="{% static 'assets/imgs/icons/star.png' %}" alt="star" />
+                                                </li>
+                                            {% endfor %}
+                                            {% for star in review.empty_stars %}
+                                                <li class="star empty">
+                                                    <img src="{% static 'assets/imgs/icons/star_disabled.png' %}" alt="star" />
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                        
+                                        
+                                    </td>
+                                    <td>{{ review.created_at|date:"d.m.Y" }}</td>
+                                    <td class="text-end">
+                                        <a href="{% url "review_details" review.id  %}" class="btn btn-md rounded font-sm">Detail</a>
+                                        
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6">No reviews available</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    
+
+        <footer class="main-footer font-xs">
+            <div class="row pb-30 pt-15">
+                <div class="col-sm-6">
+                    <script>
+                    document.write(new Date().getFullYear())
+                    </script> ©, Evara - HTML Ecommerce Template .
+                </div>
+                <div class="col-sm-6">
+                    <div class="text-sm-end">
+                        All rights reserved
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </main>
+    <style>
+
+        .rating-stars {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;  /* Make the list items align horizontally */
+        }
+        
+        .rating-stars .star {
+            margin-right: 5px;  /* Optional: Adds spacing between stars */
+        }
+        
+        .rating-stars .star img {
+            width: 20px;  /* Adjust the width of the stars */
+            height: auto;
+        }
+        
+    </style>
+    <script src="assets/js/vendors/jquery-3.6.0.min.js"></script>
+    <script src="assets/js/vendors/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/vendors/select2.min.js"></script>
+    <script src="assets/js/vendors/perfect-scrollbar.js"></script>
+    <script src="assets/js/vendors/jquery.fullscreen.min.js"></script>
+    <!-- Main Script -->
+    <script src="assets/js/main.js" type="text/javascript"></script>
+</body>
+
+</html>

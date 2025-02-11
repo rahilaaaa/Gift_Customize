@@ -1,0 +1,43 @@
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb bg-light px-3 py-2">
+        {% if request.resolver_match.url_name == 'shop' %}
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Shop</li>
+        
+        {% elif request.resolver_match.url_name == 'product_details' %}
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'shop' %}">Shop</a></li>
+            {% if product %}
+                <li class="breadcrumb-item active" aria-current="page">{{ product.title }}</li>
+            {% endif %}
+        {% endif %}
+    </ol>
+</nav>
+
+<style>
+    .breadcrumb {
+        font-size:  0.75rem; /* Make text slightly smaller */
+        background-color: #f8f9fa; /* Light background */
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+    }
+    
+    .breadcrumb a {
+        color: #007bff; /* Link color for breadcrumb URLs */
+        text-decoration: none;
+    }
+    
+    .breadcrumb a:hover {
+        text-decoration: underline;
+    }
+    
+    .breadcrumb-item + .breadcrumb-item::before {
+        color: #6c757d; /* Separator color */
+    }
+    
+    .breadcrumb-item.active {
+        color: #6c757d; /* Color for the active breadcrumb item */
+    }
+    
+</style>
+

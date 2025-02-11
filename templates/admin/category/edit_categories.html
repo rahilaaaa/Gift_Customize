@@ -1,0 +1,62 @@
+{% block head %}
+    {% include "admin/head.html" %}
+{% endblock head %}
+
+<body>       
+    <div class="screen-overlay"></div>
+   
+        
+    {% block aside %}
+        {% include 'admin/aside.html' %}
+    {% endblock aside %}
+
+    <main class="main-wrap">
+
+        
+    {% block header %}
+        {% include "admin/header.html" %}
+    {% endblock header %}
+    
+    <section class="content-main">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-9">
+                    <div class="content-header">
+                        <h2 class="content-title">Edit Category</h2>
+                    </div>
+                </div>
+              
+                {% if messages %}
+                <div class="alert-container">
+                    {% for message in messages %}
+                        <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                
+                <div class="col-lg-6">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <label for="categories_name" class="form-label"> Name</label>
+                                <input type="text" name="name" class="form-control" id="categories_name"
+                                    value="{{category.name}}" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="categories_description" class="form-label">Description</label>
+                                <textarea name="description" class="form-control" id="categories_description">{{category.description}}</textarea>
+                            </div>
+                            <div class="d-grid">
+                                <button class="btn btn-primary">Update Category</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </section>
+</main>    

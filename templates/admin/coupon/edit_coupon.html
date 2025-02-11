@@ -1,0 +1,52 @@
+
+{% block head %}
+    {% include "admin/head.html" %}
+{% endblock head %}
+
+<body>       
+    <div class="screen-overlay"></div>
+   
+        
+    {% block aside %}
+        {% include 'admin/aside.html' %}
+    {% endblock aside %}
+
+   
+
+    <main class="main-wrap">
+      {% block header %}
+      {% include "admin/header.html" %}
+      {% endblock header %}
+      
+      <section class="content-main">
+
+        <form method="post" action="{% url 'edit_coupon' coupon.id %}" enctype="multipart/form-data">
+            <div class="row">
+                {% csrf_token %}
+                <div class="col-9">
+                    <div class="content-header">
+                        <h2 class="content-title">Edit Coupon</h2>
+                    </div>
+                </div>
+                {% if messages %}
+                <div class="alert-container">
+                    {% for message in messages %}
+                        <div class="alert 
+                                    {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            
+                <div class="card mb-4">
+                    <div class="card-body">
+                        {{ form.as_p }}  <!-- Render the form fields -->
+                        <div class="d-grid">
+                            <button class="btn btn-primary">Update Coupon</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </section>

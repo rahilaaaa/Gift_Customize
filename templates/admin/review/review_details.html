@@ -1,0 +1,65 @@
+{% load static %}
+{% block head %}
+    {% include "admin/head.html" %}
+{% endblock head %}
+
+<body>       
+    <div class="screen-overlay"></div>
+   
+        
+    {% block aside %}
+        {% include 'admin/aside.html' %}
+    {% endblock aside %}
+
+    <main class="main-wrap">
+
+        
+    {% block header %}
+        {% include "admin/header.html" %}
+    {% endblock header %}
+    
+    <section class="content-main">
+        <div class="content-header">
+            <div>
+                <h2 class="content-title card-title">Review Details</h2>
+            </div>
+        </div>
+    
+        <div class="card mb-4">
+            <header class="card-header">
+
+                    <div class="row gx-3">
+                        <div class="col-lg-4 col-md-6 me-auto">
+                            <a href="{% url 'reviews' %}" class="btn btn-light">Back to Reviews</a>
+                        </div>
+                    </div>
+                
+            </header>
+    
+            <div class="card-body">
+                <div class="review-details">
+                    <h3 class="product-title">Review for Product: <b>{{ review.product.title }}</b></h3>
+                    <div class="review-meta">
+                        <p><strong>Reviewer:</strong> <span class="reviewer-name">{{ review.name }}</span></p>
+                        <p><strong>Email:</strong> <a href="mailto:{{ review.email }}" class="reviewer-email">{{ review.email }}</a></p>
+                    </div>
+    
+                    <div class="rating-section">
+                        <p><strong>Rating:</strong><span>{{review.rating }}</span></p>
+                      
+                    </div>
+    
+                    <div class="review-text">
+                        <p><strong>Review:</strong> <span class="review-content">{{ review.review_text }}</span></p>
+                    </div>
+    
+                    <div class="review-date">
+                        <p><strong>Posted On:</strong> <span class="date">{{ review.created_at|date:"d.m.Y" }}</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Styles for enhanced design -->
+    

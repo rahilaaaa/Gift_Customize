@@ -1,0 +1,158 @@
+<!DOCTYPE HTML>
+<html lang="en">
+{% load socialaccount %} 
+{% load static %}
+
+<head>
+    {% include "products/head.html" %}
+    
+</head>
+<body>
+    {% include "users/header_not_search.html" %}
+    <main>
+        <section class="content-main mt-80 mb-80">
+            <div class="card mx-auto card-login" style="max-width: 500px;">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Create Account</h4>
+
+                   <!-- Display error messages -->
+                    {% if messages %}
+                    <div>
+                        {% for message in messages %}
+                            <div 
+                                class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-danger{% endif %}" 
+                                role="alert">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+
+                    <form method="POST" action="{% url 'register' %}">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            {% comment %} <label class="form-label">Username</label> {% endcomment %}
+                            <input class="form-control" placeholder="Your username" type="text" name="username" required>
+                        </div>
+
+                        <div class="mb-3">
+                            {% comment %} <label class="form-label">Email</label> {% endcomment %}
+                            <input class="form-control" placeholder="Your email" type="email" name="email" required>
+                        </div>
+
+                        <div class="mb-3">
+                            {% comment %} <label class="form-label">Phone</label> {% endcomment %}
+                            <div class="row gx-2">
+                                <div class="col-4">
+                                    <input class="form-control" value="+91" type="text" name="country_code" readonly>
+                                </div>
+                                <div class="col-8">
+                                    <input class="form-control" placeholder="Phone" type="text" name="phone" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 position-relative">
+                            {% comment %} <label class="form-label">Password</label> {% endcomment %}
+                            <input class="form-control" placeholder="Password" type="password" name="password" id="password" required>
+                            <i class="far fa-eye position-absolute" id="togglePassword" style="right: 10px; top: 12px; cursor: pointer;"></i>
+                        </div>
+
+                        <div class="mb-3 position-relative">
+                            {% comment %} <label class="form-label">Confirm Password</label> {% endcomment %}
+                            <input class="form-control" placeholder="Confirm Password" type="password" name="confirm_password" id="confirm_password" required>
+                            <i class="far fa-eye position-absolute" id="toggleConfirmPassword" style="right: 10px; top: 12px; cursor: pointer;"></i>
+                        </div>
+
+                        <div class="mb-4">
+                            <button type="submit" class="btn w-100" style="background-color: #D19C97; border-color: #D19C97; color: white;">Verify Email</button>
+                        </div>
+                    </form>
+                    <p class="text-center small text-muted mb-15">or</p>
+
+                
+                      
+                    <div class="d-grid gap-3 mb-4">
+                        <a href="{% provider_login_url 'google' method='oauth2' %}" class="btn custom-btn-google font-sm">
+                            <svg aria-hidden="true" class="icon-svg me-2" width="20" height="20" viewBox="0 0 20 20">
+                                <path d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 002.38-5.88c0-.57-.05-.66-.15-1.18z" fill="#4285F4"></path>
+                                <path d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 01-7.18-2.54H1.83v2.07A8 8 0 008.98 17z" fill="#34A853"></path>
+                                <path d="M4.5 10.52a4.8 4.8 0 010-3.04V5.41H1.83a8 8 0 000 7.18l2.67-2.07z" fill="#FBBC05"></path>
+                                <path d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 001.83 5.4L4.5 7.49a4.77 4.77 0 014.48-3.3z" fill="#EA4335"></path>
+                            </svg> 
+                            Sign up using Google
+                        </a>
+                    </div>
+                    
+                    <div class="d-grid gap-3 mb-4">
+                        <a href="{% provider_login_url 'facebook' method='oauth2' %}" class="btn custom-btn-facebook font-sm">
+                          <svg aria-hidden="true" class="icon-svg me-2" width="20" height="20" viewBox="0 0 24 24">
+                            <path fill="#1877F2" d="M24 12.073C24 5.404 18.627 0 12 0S0 5.404 0 12.073C0 17.992 4.388 22.837 10.125 24v-8.452H7.077v-3.475h3.048V9.413c0-3.025 1.792-4.703 4.53-4.703 1.312 0 2.686.235 2.686.235v2.947h-1.514c-1.492 0-1.954.928-1.954 1.878v2.253h3.328l-.532 3.475h-2.796V24C19.612 22.837 24 17.992 24 12.073z"/>
+                          </svg>
+                          Sign up using Facebook
+                        </a>
+                    </div> 
+                         
+                        
+                        
+                        
+                        
+                  
+                    <p class="text-center mb-2">Already have an account? <a href="{% url 'login_user' %}">Login</a></p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <style>
+        .custom-btn-google {
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            color: #333;
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border-radius: 8px;
+        }
+        
+        .custom-btn-facebook {
+            background-color: #1877F2;
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border-radius: 8px;
+        }
+        
+        .custom-btn-google:hover {
+            background-color: #f8f8f8;
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .custom-btn-facebook:hover {
+            background-color: #145dbf;
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .icon-svg {
+            margin-right: 8px;
+        }
+        
+        .d-grid a {
+            text-decoration: none;
+            font-weight: 600;
+            text-align: left;
+        }
+        
+    </style>
+    {% include "users/scripts.html" %}
+   
+   
+</body>
+</html>

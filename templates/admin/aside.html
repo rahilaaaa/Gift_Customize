@@ -1,0 +1,84 @@
+{% load static %}
+<aside class="navbar-aside" id="offcanvas_aside">
+    <div class="aside-top">
+        <a href="index.html" class="brand-wrap">
+            <h1>Zyft</h1>
+            {% comment %} <img src="{% static 'assets/imgs/theme/logo.savg' %}" class="logo" alt="Evara Dashboard"> {% endcomment %}
+        </a>
+        <div>
+            <button class="btn btn-icon btn-aside-minimize"> <i class="text-muted material-icons md-menu_open"></i> </button>
+        </div>
+    </div>
+    <nav>
+        <ul class="menu-aside">
+            <li class="menu-item ">
+                <a class="menu-link" href="{% url "dashboard" %}"> <i class="icon material-icons md-home"></i>
+                    <span class="text">Dashboard</span>
+                </a>
+            </li>
+         
+
+            <li class="menu-item ">
+                <a class="menu-link" href="{% url "products" %}"> <i class="icon material-icons md-shopping_bag"></i>
+                    <span class="text">Products</span>
+                </a>
+            </li>
+            <li class="menu-item ">
+                <a class="menu-link" href="{% url "user_list" %}"> <i class="icon material-icons md-person"></i>
+                    <span class="text">Users</span>
+                </a>
+            </li>
+
+            <li class="menu-item ">
+                <a class="menu-link" href="{% url "orders_list" %}"> <i class="icon material-icons md-shopping_cart"></i>
+                    <span class="text">Orders</span>
+                </a>
+            </li>
+            
+            <li class="menu-item ">
+                <a class="menu-link" href="{% url "add_products" %}"> <i class="icon material-icons md-add_box"></i>
+                    <span class="text">Add products</span>
+                </a>
+            </li>
+            
+            
+            <li class="menu-item">
+                <a class="menu-link" href="{% url 'reviews' %}"> <i class="icon material-icons md-comment"></i>
+                    <span class="text">Reviews</span>
+                </a>
+            </li>
+
+            <li class="menu-item ">
+                <a class="menu-link" href="{% url "categories" %}"> <i class="icon material-icons md-store "></i>
+                    <span class="text">Categories</span>
+                </a>
+            </li>
+
+            <li class="menu-item ">
+                <a class="menu-link" href="{% url "add_category" %}"> <i class="icon material-icons md-add_box"></i>
+                    <span class="text">Add Category</span>
+                </a>
+            </li>
+
+            <li class="menu-item">
+                <a class="menu-link" href="{% url "coupon" %}"> <i class="icon material-icons md-stars"></i>
+                    <span class="text">Coupon</span> </a>
+            </li>
+
+            <li class="menu-item">
+                <a class="menu-link" href="{% url "offers" %}"> <i class="icon material-icons md-local_offer"></i>
+                    <span class="text">Offers</span> </a>
+            </li>
+            
+
+            
+            
+            <li class="menu-item">
+                <a class="menu-link" disabled href="#"> <i class="icon material-icons md-pie_chart"></i>
+                    <span class="text">Statistics</span>
+                </a>
+            </li>
+        </ul>
+        <hr>
+    </nav>
+</aside>

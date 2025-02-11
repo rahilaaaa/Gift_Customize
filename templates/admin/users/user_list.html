@@ -1,0 +1,120 @@
+{% block head %}
+    {% include "admin/head.html" %}
+{% endblock head %}
+
+<body>       
+    <div class="screen-overlay"></div>
+   
+        
+    {% block aside %}
+        {% include 'admin/aside.html' %}
+    {% endblock aside %}
+
+    <main class="main-wrap">
+        {% load static %}
+                
+    {% block header %}
+    {% include "admin/header.html" %}
+{% endblock header %}
+
+<section class="content-main">
+    <div class="content-header">
+        <div>
+            <h2 class="content-title card-title">Users List</h2>
+        </div>
+      
+    </div>
+    <div class="card mb-4">
+        <header class="card-header">
+            <div class="row gx-3">
+                <div class="col-lg-4 col-md-6 me-auto">
+                    <form action="{% url "user_list" %}" method="get">
+                        <input type="text" name="search" placeholder="Search..." value="{{ search_query }}" class="form-control">
+                    </form>
+                </div>
+            </div>
+        </header> <!-- card-header end// -->
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td width="40%">
+                                <a href="#" class="itemside">
+                                    <div class="info pl-3">
+                                        <h6 class="mb-0 title">{{ user.username }}</h6>
+                                    </div>
+                                </a>
+                            </td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                {% if user.is_active %}
+                                    <span class="badge rounded-pill alert-success">Active</span>
+                                {% else %}
+                                    <span class="badge rounded-pill alert-danger">Blocked</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if user.is_active %}
+                                    <a href="{% url 'block_user' user.id %}  " 
+                                       class="btn btn-sm btn-brand rounded font-sm mt-15 block-btn" 
+                                       data-username="{{ user.username }}">
+                                        Block
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'unblock_user' user.id %}" 
+                                       class="btn btn-sm btn-brand rounded font-sm mt-15 unblock-btn" 
+                                       data-username="{{ user.username }}">
+                                        Unblock
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center">No users found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table> <!-- table-responsive.// -->
+            </div>
+        </div> <!-- card-body end// -->
+    </div> <!-- card end// -->
+</section>
+
+<script>
+    // Attach click event handlers for block and unblock buttons
+    document.addEventListener("DOMContentLoaded", function () {
+        // Confirmation for blocking
+        document.querySelectorAll('.block-btn').forEach(function (button) {
+            button.addEventListener('click', function (event) {
+                const username = button.getAttribute('data-username');
+                const confirmAction = confirm(`Are you sure you want to block user "${username}"?`);
+                if (!confirmAction) {
+                    event.preventDefault(); // Prevent navigation if user cancels
+                }
+            });
+        });
+
+        // Confirmation for unblocking
+        document.querySelectorAll('.unblock-btn').forEach(function (button) {
+            button.addEventListener('click', function (event) {
+                const username = button.getAttribute('data-username');
+                const confirmAction = confirm(`Are you sure you want to unblock user "${username}"?`);
+                if (!confirmAction) {
+                    event.preventDefault(); // Prevent navigation if user cancels
+                }
+            });
+        });
+    });
+</script>
+

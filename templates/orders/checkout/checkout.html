@@ -1,0 +1,188 @@
+
+{% load static %}
+
+{% block head %}
+    {% include "products/head.html" %}
+{% endblock head %}
+
+
+<body>
+
+{% block topbar %}
+
+    {% include "products/topbar.html" %}
+    
+{% endblock topbar %}
+
+{% block navbar %}
+        {% include "products/navbar.html" %}
+    {% endblock navbar %}
+
+<!-- Checkout Page Start -->
+<div class="container-fluid py-5">
+  <div class="row px-xl-5">
+    
+    <!-- Address Portion Start -->
+    <div class="col-lg-8">
+      <div class="card border-secondary mb-5">
+        <div class="card-header bg-secondary border-0">
+          <h4 class="font-weight-semi-bold m-0">My Addresses</h4>
+        </div>
+        <div class="card-body">
+          <div class="address-card">
+            <label class="address-item d-flex align-items-start mb-4">
+              <input type="radio" name="address" value="kamala" class="mr-3 mt-1">
+              <div class="address-details">
+                <strong>Kamala</strong>
+                <p>Kottayil House</p>
+                <p>Calicut, Kerala, India</p>
+                <p>Pin: 658796</p>
+                <p>Mobile No: 8976065346</p>
+                <a href="#" class="edit-link text-primary">Edit Address</a>
+              </div>
+            </label>
+
+            <label class="address-item d-flex align-items-start">
+              <input type="radio" name="address" value="ser6" class="mr-3 mt-1">
+              <div class="address-details">
+                <strong>Ser6</strong>
+                <p>Kottayil House</p>
+                <p>Calicut, Kerala, India</p>
+                <p>Pin: 671531</p>
+                <p>Mobile No: 7598092030</p>
+                <a href="#" class="edit-link text-primary">Edit Address</a>
+              </div>
+            </label>
+          </div>
+        </div>
+        <div class="card-footer border-secondary bg-transparent">
+          <a href="#" class="btn btn-primary">Click here to Add New Address</a>
+        </div>
+      </div>
+    </div>
+    <!-- Address Portion End -->
+    
+    <!-- Order Summary and Payment Section Start -->
+    <div class="col-lg-4">
+      <div class="card border-secondary mb-5">
+        <div class="card-header bg-secondary border-0">
+          <h4 class="font-weight-semi-bold m-0">Order Summary</h4>
+        </div>
+
+        <!-- Order Items Start -->
+      
+          <div class="card-body">
+            <h5>Your Orders</h5>
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th class="text-center">Quantity</th>
+                  <th class="text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in cart_items %}
+                <tr>
+                  <td class="d-flex align-items-center">
+                    {% if item.product.images.first %}
+                    <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.title }}" style="width: 50px; height: 50px; object-fit: cover; margin-right: 10px;">
+                    {% endif %}
+                    <span>{{ item.product.title }}</span>
+                  </td>
+                  <td class="text-center">{{ item.quantity }}</td>
+                  <td class="text-right">₹{{ item.price|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        <!-- Order Items End -->
+
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-3 pt-1">
+          <h6 class="font-weight-medium">Subtotal</h6>
+          <h6 id="cartSubtotal">${{ subtotal }}</h6>
+      </div>
+      
+      {% if request.session.coupon_discount %}
+      <div class="d-flex justify-content-between mb-3">
+          <h6 class="font-weight-medium">Coupon Discount</h6>
+          <h6 class="text-success">-${{ request.session.coupon_discount }}</h6>
+      </div>
+      {% endif %}  
+      
+      
+      <div class="d-flex justify-content-between">
+          <h6 class="font-weight-medium">Shipping</h6>
+          <h6>${{ shipping_cost }}</h6>
+      </div>
+      </div>
+      
+      <div class="card-footer border-secondary bg-transparent">
+      <div class="d-flex justify-content-between mt-2">
+          <h5 class="font-weight-bold">Total</h5>
+          <h5 id="cartTotal">${{ total|floatformat:2 }}</h5>
+      </div>
+
+      </div>
+
+      <!-- Payment Options Start -->
+      <div class="card border-secondary">
+        <div class="card-header bg-secondary border-0">
+          <h4 class="font-weight-semi-bold m-0">Payment Options</h4>
+        </div>
+        <div class="card-body">
+          <label class="d-flex align-items-center mb-3">
+            <input type="radio" name="payment_method" value="cod" class="mr-3 mt-1">
+            <span>Cash on Delivery</span>
+          </label>
+
+          <label class="d-flex align-items-center">
+            <input type="radio" name="payment_method" value="razorpay" class="mr-3 mt-1">
+            <span>Pay with Razorpay</span>
+          </label>
+        </div>
+        <div class="card-footer border-secondary bg-transparent">
+          <button type="submit" class="btn btn-block btn-primary my-3 py-3" id="placeOrderButton">Place Order</button>
+        </div>
+      </div>
+      <!-- Payment Options End -->
+
+    </div>
+    <!-- Order Summary and Payment Section End -->
+  </div>
+</div>
+<!-- Checkout Page End -->
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  document.getElementById('placeOrderButton').addEventListener('click', function () {
+    const selectedPaymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
+    
+    if (!selectedPaymentMethod) {
+      alert('Please select a payment method.');
+      return;
+    }
+
+    if (selectedPaymentMethod === 'razorpay') {
+      var options = {
+        "key": "YOUR_RAZORPAY_KEY", 
+        "amount": {{ total|floatformat:2 }} * 100, 
+        "currency": "INR",
+        "name": "Your Company Name",
+        "description": "Order Payment",
+        "handler": function (response) {
+          alert('Payment successful! Payment ID: ' + response.razorpay_payment_id);
+        },
+        "theme": {
+          "color": "#3399cc"
+        }
+      };
+      var rzp = new Razorpay(options);
+      rzp.open();
+    } else {
+      alert('Cash on Delivery selected. Order placed!');
+    }
+  });
+</script>

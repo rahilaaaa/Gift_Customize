@@ -1,0 +1,159 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+
+{% block head %}
+    {% include "products/head.html" %}
+{% endblock head %}
+
+
+<body>
+
+
+{% block not_search %}
+
+    {% include "users/header_not_search.html" %}
+   
+
+    
+{% endblock not_search %}
+
+
+
+{% block navbar %}
+        {% include "products/navbar.html" %}
+    {% endblock navbar %}
+
+
+<!-- Shop Product Start -->
+<div class="col-lg-9 col-md-12 text-center">
+    <div class="row pb-3 justify-content-center">
+        <!-- Top Bar: Categories, Search Bar, Sort By -->
+        <div class="col-12 pb-3">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="d-flex align-items-center w-100" style="margin-left: 250px;"> <!-- Adjust margin-left here -->
+                
+                    <!-- Categories Dropdown -->
+                    <div class="categories-wrapper mr-3 position-relative">
+                        <a class="btn shadow-none d-flex align-items-center justify-content-between bg-primary text-white rounded" 
+                            data-toggle="collapse" 
+                            href="#navbar-vertical" 
+                            style="height: 45px; padding: 0 20px;">
+                                <h6 class="m-0" style="font-size: 14px;">
+                                    {% if selected_category == 'all' %}
+                                        All Categories
+                                    {% else %}
+                                        {{ selected_category|capfirst }}  <!-- Capitalized category name -->
+                                    {% endif %}
+                                </h6>
+                                <i class="fa fa-angle-down text-white"></i>
+                        </a>
+
+                        <nav class="collapse navbar navbar-vertical navbar-light bg-light border position-absolute mt-1" 
+                                id="navbar-vertical" 
+                                style="width: 100%; z-index: 10;">
+                            <div class="navbar-nav w-100 overflow-auto" style="max-height: 300px;">
+                                <!-- Link to All Categories -->
+                                <a href="?category=all" class="nav-item nav-link {% if selected_category == 'all' %}active{% endif %}">All Categories</a>
+                                
+                                <!-- Category Links -->
+                                {% for category in categories %}
+                                    <a href="?category={{ category.name }}" class="nav-item nav-link {% if selected_category == category.name %}active{% endif %}">
+                                        {{ category.name|capfirst }}
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        </nav>
+                    </div>
+
+                    <!-- Search Bar -->
+                    <form action="" method="get" class="flex-grow-1 mx-3">
+                        <div class="input-group">
+                            <input type="text" name="search" class="form-control border" placeholder="Search by name" value="{{ search_query }}">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fa fa-search text-white"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Sort By -->
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button" id="triggerId" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Sort by
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="triggerId">
+                            <!-- Link to sort by latest (last created first) -->
+                            <a class="dropdown-item {% if sort_by == 'latest' %}active{% endif %}" href="?category={{ selected_category }}&sort=latest">Latest</a>
+
+                            <!-- Link to sort by price low to high -->
+                            <a class="dropdown-item {% if sort_by == 'low_to_high' %}active{% endif %}" href="?category={{ selected_category }}&sort=low_to_high">Low to High</a>
+
+                            <!-- Link to sort by price high to low -->
+                            <a class="dropdown-item {% if sort_by == 'high_to_low' %}active{% endif %}" href="?category={{ selected_category }}&sort=high_to_low">High to Low</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Shop Product End -->
+
+<!-- Products Section -->
+<div class="row justify-content-center ms-3">
+    {% for item in products_with_images %}
+    <a href="{% url 'product_details' item.product.id %}">
+        <div class="col-lg-3 col-md-4 col-sm-6 pb-1">
+            <div class="card product-item border-0 mb-4">
+                <div class="card-header product-img position-relative overflow-hidden bg-transparent border p-0">
+                    <img class="img-fluid w-100" src="{{ item.image }}" alt="{{ item.product.title }}">
+                </div>
+                <div class="card-body border-left border-right text-center p-0 pt-4 pb-3">
+                    <h6 class="text-truncate mb-3">{{ item.product.title }}</h6>
+                    <div class="d-flex justify-content-center">
+                        <h6>${{ item.product.price }}</h6><h6 class="text-muted ml-2"></h6>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between bg-light border">
+                    <a href="{% url 'product_details' item.product.id %}" class="btn btn-sm text-dark p-0"><i class="fas fa-eye text-primary mr-1"></i>Customize</a>
+                    <a href="" class="btn btn-sm text-dark p-0"><i class="bi bi-heart-fill"></i>Add To Whishlist</a>
+                </div>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+ 
+{% include "products/pagination.html" %}
+</div>
+
+<!-- Footer Start -->
+    {% block footer %}
+        {% include "products/footer.html" %}
+    {% endblock footer %}
+<!-- Footer End -->
+
+<!-- Back to Top -->
+<a href="#" class="btn btn-primary back-to-top"><i class="fa fa-angle-double-up"></i></a>
+{% include "products/script.html" %}
+{% comment %} <!-- JavaScript Libraries -->
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js"></script>
+<script src="lib/easing/easing.min.js"></script>
+<script src="lib/owlcarousel/owl.carousel.min.js"></script>
+
+<!-- Contact Javascript File -->
+<script src="mail/jqBootstrapValidation.min.js"></script>
+<script src="mail/contact.js"></script>
+
+<!-- Template Javascript -->
+<script src=" {% static "js/main.js" %} "></script>
+ {% endcomment %}
+ <script src="{% static 'js/dropdown.js'%}"></script>
+
+</body>
+</html>

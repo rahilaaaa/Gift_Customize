@@ -1,0 +1,16 @@
+# Ignore SQLite database files
+*db.sqlite3
+
+# Ignore Django migration files
+*/migrations/
+
+#ignore pychache file
+*/__pycache__/
+
+myenv/
+/.env
+
+
+
+
+*/media/

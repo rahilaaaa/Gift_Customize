@@ -1,0 +1,55 @@
+<!DOCTYPE HTML>
+<html lang="en">
+{% load static %}
+<head>
+    {% include "products/head.html" %}
+</head>
+<body>
+    {% include "users/header_not_search.html" %}
+    <main>
+        <section class="content-main mt-40 mb-40">
+            <div class="card mx-auto card-login" style="max-width: 400px;">
+                <div class="card-body">
+                    <h4 class="card-title mb-4 text-center">OTP Verification</h4>
+
+                    <!-- Display error and success messages -->
+                    {% if messages %}
+                        <div>
+                            {% for message in messages %}
+                                <div 
+                                    class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}" 
+                                    role="alert">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <form method="POST" action="{% url 'otp_verification' %}">
+                        {% csrf_token %}
+                        
+                        <input type="hidden" name="email" value="{{ email }}">
+                    
+                        <div class="mb-3">
+                            <label class="form-label">Enter the OTP you received in the email </label>
+                            <p class="text-muted mb-2">{{ email }}</p> <!-- Just display the email, no input needed -->
+                            <input class="form-control" placeholder="Enter the OTP" type="text" name="otp" maxlength="6" required>
+                        </div>
+                    
+                        <div class="mb-3 text-center">
+                            <span id="countdown" class="text-muted"></span>
+                        </div>
+                    
+                        <div class="mb-4">
+                            <button type="submit" class="btn w-100" style="background-color: #D19C97; border-color: #D19C97; color: white;">Verify OTP</button>
+                        </div>
+                    </form>
+                    <p class="text-center small text-muted mb-2">Didn't receive OTP? <a href="{% url 'resend_otp' %}">Resend OTP</a></p>
+                    
+                   
+                </div>
+            </div>
+        </section>
+    </main>
+    {% include "users/scripts.html" %}
+</body>
+</html>

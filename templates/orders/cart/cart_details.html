@@ -1,0 +1,141 @@
+{% load static %}
+
+{% block head %}
+    {% include "products/head.html" %}
+{% endblock head %}
+
+<body>
+
+{% block topbar %}
+    {% include "products/topbar.html" %}
+{% endblock topbar %}
+
+{% block navbar %}
+    {% include "products/navbar.html" %}
+{% endblock navbar %}
+
+<section class="pt-80 pb-100">
+    <div class="container">
+        <div class="row">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Cart Details</h5>
+                    <div class="invoice-header"></div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <!-- Table Head -->
+                            <thead>
+                                {% if cart_items %}
+                                    {% for item in cart_items %}
+                                        {% if forloop.first %}
+                                            {% if item.product.category.name == '3d_crystal' %}
+                                                <tr>
+                                                    <th>Product</th>
+                                                    <th>Price</th>                                                    
+                                                    <th>Size</th>
+                                                    <th>Quantity</th>
+                                                    <th>Customized Content</th>
+                                                    <th>View Flex</th>
+                                                </tr>
+                                            {% elif item.product.category.name == 'wallet' %}
+                                                <tr>
+                                                    <th>Product</th>
+                                                    <th>Price</th>
+                                                    <th>Color</th>
+                                                    <th>Charm</th>
+                                                    <th>Quantity</th>
+                                                    <th>Customized Content</th>
+                                                </tr>
+                                            {% elif item.product.category.name == 'water_bottle' %}
+                                                <tr>
+                                                    <th>Product</th>
+                                                    <th>Price</th>
+                                                    <th>Liter</th>
+                                                    <th>Quantity</th>
+                                                    <th>Customized Content</th>
+                                                </tr>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <th colspan="7">No Items in Cart</th>
+                                    </tr>
+                                {% endif %}
+                            </thead>
+                            <!-- Table Body -->
+                            <tbody>
+                                {% for item in cart_items %}
+                                    <tr>
+                                        <td>{{ item.product.title }}</td>
+                                        <td>${{ item.price }}</td>
+                                        
+                                        <!-- Category-specific Fields -->
+                                        <td>
+                                            {% if item.product.category.name == '3d_crystal' %}
+                                                {{ item.variant.size }}
+                                            {% elif item.product.category.name == 'wallet' %}
+                                                {{ item.variant.color }}
+                                            {% elif item.product.category.name == 'water_bottle' %}
+                                                {{ item.variant.liter }}
+                                            {% else %}
+                                                No Variant
+                                            {% endif %}
+                                        </td>
+                                        <!-- Wallet-specific Charm -->
+                                        {% if item.product.category.name == 'wallet' %}
+                                        <td>
+                                            <div style="display: flex; align-items: center;">
+                                                <img src="{{ item.variant.charmImg.url }}" alt="Charm Image" style="max-width: 30px; max-height: 30px; object-fit: cover; border: 1px solid #ddd; border-radius: 8px; margin-right: 8px;">
+                                                <span>{{ item.variant.charm|default:"No Charm" }}</span>
+                                            </div>
+                                        </td>
+                                        {% endif %}
+                                    
+                                        <td>{{ item.quantity }}</td>
+                                        <!-- Customization Content -->
+                                        <td>
+                                            {% if item.customization %}
+                                                {% if item.customization.customization_text %}
+                                                    {{ item.customization.customization_text }}
+                                                {% endif %}
+                                                {% if item.customization.customization_image %}
+                                                    <img src="{{ item.customization.customization_image.url }}" alt="Customization Image" style="max-width: 100px; max-height: 100px; object-fit: cover; border: 1px solid #ddd; border-radius: 8px;">
+                                                {% endif %}
+                                            {% else %}
+                                                No Customization
+                                            {% endif %}
+                                        </td>
+                                        {% if item.product.category.name == '3d_crystal'  %}
+                                            <td>
+                                                {{ item.variant.viewflex }}
+                                            </td>
+                                        {% endif %}
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="7">No items in the cart.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% block footer %}
+    {% include "products/footer.html" %}
+{% endblock footer %}
+
+<!-- Back to Top -->
+<a href="#" class="btn btn-primary back-to-top"><i class="fa fa-angle-double-up"></i></a>
+
+{% include "products/script.html" %}
+
+</body>
+</html>

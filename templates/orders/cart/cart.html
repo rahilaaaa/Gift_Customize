@@ -1,0 +1,210 @@
+
+{% load static %}
+
+{% block head %}
+    {% include "products/head.html" %}
+{% endblock head %}
+
+
+<body>
+
+{% block topbar %}
+
+    {% include "products/topbar.html" %}
+    
+{% endblock topbar %}
+
+{% block navbar %}
+        {% include "products/navbar.html" %}
+    {% endblock navbar %}
+
+
+<!-- Cart Page Start -->
+<div class="container-fluid py-5">
+    <div class="row px-xl-5">
+
+        <div class="col-lg-8 table-responsive mb-5">
+            <table class="table table-bordered text-center mb-0">
+                <thead class="bg-secondary text-dark">
+                    <tr>
+                        <th>Products</th>
+                        <th>Price</th>
+                        <th>Variant</th>
+                        <th>Quantity</th>
+                        <th>Remove</th>
+                        <th>Details</th>
+                        {% comment %} <th>Customize_content</th> {% endcomment %}
+                    </tr>
+                </thead>
+                <tbody id="cartItems">
+                    {% for item in cart_items %}
+                    <tr id="cartItemRow-{{ item.id }}">
+                        <td class="product-info">
+                            <div class="d-flex align-items-center">
+                                {% if item.product.images.first %}
+                                <a href="{% url "product_details" item.product.id %}">
+                                    <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.title }}" class="product-image">
+                                </a>
+                                {% else %}
+                                <span>No Image</span>
+                                {% endif %}
+                                <span class="product-title ms-2">{{ item.product.title }}</span>
+                            </div>
+                        </td>
+                        
+                        <td>${{ item.price }}</td>
+                        <td> {% if item.product.category.name == '3d_crystal' %}
+                            {{ item.variant.size }}
+                        {% elif item.product.category.name == 'wallet' %}
+                            {{ item.variant.color }}
+                        {% elif item.product.category.name == 'water_bottle' %}
+                            {{ item.variant.liter }}
+                        {% else %}
+                            No Variant
+                        {% endif %}</td>
+                        <td>
+                            
+                                {{ item.quantity }}
+                            
+                        </td>
+                        <td>
+                            <a href="{% url 'remove_from_cart' item.id %}" class="btn btn-sm btn-danger   remove-item">Remove</a>
+                        </td>
+                        <td>
+                            {% comment %} <div class="customization-content">
+                              {% if item.customization %}
+                                {% if item.customization.customization_text %}
+                                  <p>{{ item.customization.customization_text }}</p>
+                                {% endif %}
+                                {% if item.customization.customization_image %}
+                                  <img src="{{ item.customization.customization_image.url }}" alt="Customization Image" class="customization-image">
+                                {% endif %}
+                              {% else %}
+                                <span>No Customization</span>
+                              {% endif %}
+                            </div> {% endcomment %}
+                            <a href="{% url 'cart_details' item.id  %}" >View</a>
+                          </td>
+                          
+                        
+                        
+                    </tr>
+                    
+                    {% endfor %}
+                </tbody>
+                
+            </table>
+        </div>
+
+        <div class="col-lg-4">
+            <form class="mb-5" action="{% url 'apply_coupon' %}" method="POST">
+                {% csrf_token %}
+                <div class="input-group">
+                    <input type="text" name="coupon_code" class="form-control p-4" placeholder="Coupon Code">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="submit">Apply Coupon</button>
+                    </div>
+                </div>
+            </form>
+            
+
+            <div class="card border-secondary mb-5">
+                <div class="card-header bg-secondary border-0">
+                    <h4 class="font-weight-semi-bold m-0">Cart Summary</h4>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3 pt-1">
+                        <h6 class="font-weight-medium">Subtotal</h6>
+                        <h6 id="cartSubtotal">${{ subtotal }}</h6>
+                    </div>
+                    
+                    {% if request.session.coupon_discount %}
+                    <div class="d-flex justify-content-between mb-3">
+                        <h6 class="font-weight-medium">Coupon Discount</h6>
+                        <h6 class="text-success">-${{ request.session.coupon_discount }}</h6>
+                    </div>
+                    {% endif %}  
+                    
+                    
+                    <div class="d-flex justify-content-between">
+                        <h6 class="font-weight-medium">Shipping</h6>
+                        <h6>${{ shipping_cost }}</h6>
+                    </div>
+                    </div>
+                    
+                    <div class="card-footer border-secondary bg-transparent">
+                    <div class="d-flex justify-content-between mt-2">
+                        <h5 class="font-weight-bold">Total</h5>
+                        <h5 id="cartTotal">${{ total|floatformat:2 }}</h5>
+                    </div>
+                    <a href="{% url 'checkout' %}" class="btn btn-block btn-primary my-3 py-3">Proceed To Checkout</a>
+
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<style>
+    .product-info {
+        text-align: left;
+        vertical-align: middle;
+    }
+    
+    .product-info img.product-image {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+    
+    .product-title {
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    /* Customization Content Styles */
+    .customization-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    text-align: center;
+    }
+
+    .customization-content img {
+    max-width: 80px;
+    max-height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    .customization-content p {
+    font-size: 14px;
+    color: #333;
+    margin: 0;
+    max-width: 120px;
+    word-wrap: break-word;
+    }
+
+    
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Select all remove buttons
+        const removeButtons = document.querySelectorAll('.remove-item');
+    
+        // Attach event listeners to each button
+        removeButtons.forEach(button => {
+            button.addEventListener('click', function(event) {
+                // Prevent the default action (following the link)
+                if (!confirm('Are you sure you want to remove this item?')) {
+                    event.preventDefault();
+                }
+            });
+        });
+    });
+</script>

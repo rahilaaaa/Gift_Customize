@@ -1,0 +1,297 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+{% block head %}
+    {% include "products/head.html" %}
+{% endblock head %}
+
+
+<body>
+
+{% block topbar %}
+
+    {% include "products/topbar.html" %}
+    
+{% endblock topbar %}
+
+{% block navbar %}
+        {% include "products/navbar.html" %}
+    {% endblock navbar %}
+
+<!-- Product Detail Start -->
+
+<div class="container-fluid py-5">
+    <div class="row px-xl-5">
+        <!-- Image Section -->
+        <div class="col-lg-5 pb-5">
+            <div id="imageZoomContainer" style="position: relative; width: 100%; height: 400px; overflow: hidden; cursor: zoom-in;">
+                <img id="mainImage" src="{{ product_images.0.image.url }}" alt="Main Image" width="100%" height="100%" style="object-fit: cover; transition: transform 0.2s ease;">
+            </div>
+            <div class="d-flex justify-content-center mt-3">
+                {% for image in product_images %}
+                    <img src="{{ image.image.url }}" alt="Small Image" width="80px" height="80px" onclick="changeImage(this)" class="small-image" style="cursor: pointer;">
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Product Info Section -->
+        <div class="col-lg-7 pb-5">
+            <h3>{{ product.title }}</h3>
+            <div class="d-flex mb-3">
+                <div class="text-primary mr-2">
+                    <small class="fas fa-star"></small>
+                    <small class="fas fa-star"></small>
+                    <small class="fas fa-star"></small>
+                    <small class="fas fa-star-half-alt"></small>
+                    <small class="far fa-star"></small>
+                </div>
+                <small class="pt-1">({{reviews|length }})</small>
+            </div>
+            <h3>${{ product.price }}</h3>
+            <p>{{ product.description }}</p>
+
+            <!-- Sizes Section -->
+        <form action="{% url 'add_to_cart' %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+            <div style="padding: 15px; background-color: #f8f9fa; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+                <p style="font-size: 16px; color: #333; font-weight: bold;">Liter:</p>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    {% for variant in product_variants %}
+                        <label style="font-size: 14px; color: #555; cursor: pointer; padding: 8px 16px; border: 2px solid #007bff; border-radius: 20px; transition: all 0.3s ease;">
+                            <input type="radio" name="liter" value="{{ variant.liter }}" data-quantity="{{ variant.quantity }}" style="margin-right: 8px; accent-color: #007bff;" onclick="updateAvailability(this)">
+                            {{ variant.liter }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+    
+
+            <!-- Enter Name for Wallet Section -->
+            <div class="d-flex mb-4 align-items-center" style="margin-top: 20px;">
+                <p class="text-dark font-weight-medium mb-0 mr-3">Enter Your Text:</p>
+             
+                    <div class="custom-file" style="position: relative; width: 100%; max-width: 300px;">
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="wallet-name" 
+                            name="wallet-name" 
+                            placeholder="Your Text" 
+                            maxlength="20" 
+                            style="border: 2px solid #007bff; border-radius: 25px; padding: 10px 20px; font-size: 14px; color: #333; background-color: #f8f9fa; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); width: 100%;"
+                            onfocus="this.style.backgroundColor='#ffffff'; this.style.boxShadow='0 6px 10px rgba(0, 91, 187, 0.2)'; this.style.borderColor='#0056b3';"
+                            onblur="this.style.backgroundColor='#f8f9fa'; this.style.boxShadow='0 4px 6px rgba(0, 0, 0, 0.1)'; this.style.borderColor='#007bff';"
+                        >
+                        <span 
+                            style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); font-size: 16px; color: #007bff;">
+                            ✨
+                        </span>
+                    </div>
+             
+            </div>
+
+
+            <!-- Quantity and Add to Cart Section -->
+     
+            <div class="d-flex align-items-center mb-4 pt-2">
+                <div class="input-group quantity mr-3" style="width: 130px;">
+                    <div class="input-group-btn">
+                        <button type="button" class="btn btn-primary btn-minus" onclick="decreaseQuantity()">
+                            <i class="fa fa-minus"></i>
+                        </button>
+                    </div>
+                    <input type="text" 
+                        class="form-control bg-secondary text-center" 
+                        id="quantity" 
+                        name="quantity" 
+                        value="1">
+                    <div class="input-group-btn">
+                        <button type="button" class="btn btn-primary btn-plus" onclick="increaseQuantity()">
+                            <i class="fa fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+        
+                    
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <input type="hidden" name="liter" value="{{ selected_liter }}">
+                <button type="submit" class="btn btn-primary mt-1">Add To Cart</button>
+                 
+            </div>
+        
+        </form>
+            <!-- Availability Section -->
+            <div id="availabilitySection">
+                <h6>Availability: <span id="availabilityMessage"></span></h6>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Product Detail End -->
+
+<!-- Reviews Section -->
+
+{% block review %}
+    {% include "products/review.html" %}
+{% endblock review %}
+
+    
+{% block related_product %}
+{% include "products/related_products.html" %}
+{% endblock related_product %}
+
+
+
+
+    {% block footer %}
+        {% include "products/footer.html" %}
+    {% endblock footer %}
+
+
+
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-primary back-to-top"><i class="fa fa-angle-double-up"></i></a>
+
+    {% include "products/script.html" %}
+
+    
+
+    {% comment %}  <!-- Template Javascript -->
+    <script src="{% static 'js/main.js'%}"></script>
+    <script src="{% static 'js/ReviewToggle.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/change_image.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/quantity.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/zoom.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/StarRating.js' %}" type="text/javascript"></script>  {% endcomment %}
+
+</body>
+
+</html>  
+
+
+<script>
+    // Change image on thumbnail click
+    function changeImage(imageElement) {
+        document.getElementById("mainImage").src = imageElement.src;
+    }
+
+    // Update quantity and availability message when a size is selected
+    function updateAvailability(inputElement) {
+        const quantity = inputElement.getAttribute('data-quantity'); // Get the quantity from the clicked variant
+        const availabilityMessage = document.getElementById('availabilityMessage');
+
+        // Update the availability message
+        if (quantity > 0) {
+            availabilityMessage.textContent = Only ${quantity} items left in stock;
+            availabilityMessage.style.color = 'red';
+        } else {
+            availabilityMessage.textContent = 'Out of stock';
+            availabilityMessage.style.color = 'grey';
+        }
+    }
+
+    
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+    // Function to handle variant selection
+    function selectVariant(element) {
+        // Deselect all variants
+        document.querySelectorAll('.variant-color').forEach(function(item) {
+            item.style.border = "1px solid transparent";
+            item.style.backgroundColor = "transparent";
+        });
+
+        
+       
+        // Perform actions with the selected variant
+        const color = element.getAttribute('data-color');
+        const quantity = element.getAttribute('data-quantity');
+        updateAvailability(element);
+    }
+
+    // Update availability message based on selected variant's quantity
+    function updateAvailability(inputElement) {
+        const quantity = parseInt(inputElement.getAttribute('data-quantity'));
+        const availabilityMessage = document.getElementById('availabilityMessage');
+    
+        if (quantity > 0) {
+            availabilityMessage.textContent = `Only ${quantity} items left in stock`;
+            availabilityMessage.style.color = 'red';
+        } else {
+            availabilityMessage.textContent = 'Out of stock';
+            availabilityMessage.style.color = 'grey';
+        }
+    }
+
+    // Increase quantity in the input box
+    function increaseQuantity() {
+        var quantity = document.getElementById("quantity");
+        quantity.value = parseInt(quantity.value) + 1;
+    }
+
+    // Decrease quantity in the input box
+    function decreaseQuantity() {
+        var quantity = document.getElementById("quantity");
+        if (quantity.value > 1) {
+            quantity.value = parseInt(quantity.value) - 1;
+        }
+    }
+
+    // Optional: Set initial availability message on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const firstVariant = document.querySelector('.variant-color');
+        if (firstVariant) {
+            updateAvailability(firstVariant);
+        }
+    });
+</script>
+
+<script src="{% static "js/charm.js" %}"></script>
+<script src="{% static 'js/StarRating.js' %}" type="text/javascript"></script>
+
+
+
+<script>
+    // Change image on thumbnail click
+    function changeImage(imageElement) {
+        document.getElementById("mainImage").src = imageElement.src;
+    }
+
+    // Update quantity and availability message when a size is selected
+    function updateAvailability(inputElement) {
+        const quantity = inputElement.getAttribute('data-quantity'); // Get the quantity from the clicked variant
+        const availabilityMessage = document.getElementById('availabilityMessage');
+
+        // Update the availability message
+        if (quantity > 0) {
+            availabilityMessage.textContent = Only ${quantity} items left in stock;
+            availabilityMessage.style.color = 'red';
+        } else {
+            availabilityMessage.textContent = 'Out of stock';
+            availabilityMessage.style.color = 'grey';
+        }
+    }
+
+    
+</script>
+
+
