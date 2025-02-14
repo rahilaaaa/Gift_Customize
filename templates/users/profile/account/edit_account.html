@@ -16,52 +16,38 @@
     <section class="content-main mt-80 mb-80">
         <div class="card mx-auto card-login" style="max-width: 600px;">
             <div class="card-body">
-                <h4 class="card-title mb-4">Edit Address</h4>
+                <h4 class="card-title mb-4">Edit Your Account</h4>
 
-             <!-- Display messages -->
+                <!-- Display messages -->
                 {% if messages %}
                     <div>
                         {% for message in messages %}
                             <div 
-                                class="alert text-danger{% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}" 
+                                class="alert text-danger {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}" 
                                 role="alert">
                                 {{ message }}
                             </div>
                         {% endfor %}
                     </div>
-                {% endif %} 
+                {% endif %}
 
                 <!-- Start Form -->
                 <form method="post">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label for="name" class="form-label">Name</label>
-                        {{ form.name }}
-                        <div class="text-danger">{{ form.name.errors }}</div>
+                        <label for="username" class="form-label">Username</label>
+                        {{ form.username }}
+                        <div class="text-danger" id="error-username"></div>
                     </div>
                     <div class="mb-3">
-                        <label for="mobile" class="form-label">Mobile</label>
-                        {{ form.mobile }}
+                        <label for="email" class="form-label">Email Address</label>
+                        {{ form.email }}
+                        <div class="text-danger" id="error-email"></div>
                     </div>
                     <div class="mb-3">
-                        <label for="country" class="form-label">Country</label>
-                        {{ form.country }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="state" class="form-label">State</label>
-                        {{ form.state }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="city" class="form-label">City</label>
-                        {{ form.city }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="street" class="form-label">Street</label>
-                        {{ form.street }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="pincode" class="form-label">Pincode</label>
-                        {{ form.pincode }}
+                        <label for="phone" class="form-label">Phone</label>
+                        {{ form.phone }}
+                        <div class="text-danger" id="error-phone"></div>
                     </div>
                     <div class="mb-4">
                         <button type="submit" class="btn w-100 custom-btn btn-primary">Save</button>
@@ -103,11 +89,14 @@
     .position-relative {
         position: relative;
     }
-
-    .text-danger {
-        color: red;
-    }
 </style>
+
+<script>
+    function editUserValidation() {
+        // Add your validation logic here
+        return true;
+    }
+</script>
 
 </body>
 </html>

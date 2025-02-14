@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404,redirect
 from django.http import HttpResponseRedirect
 from .models import Product, Category,Review,CustomizationOption,ProductCustomization
+from orders.models import Cart,Wishlist
 from .helpers import get_paginated_products
 from django.http import JsonResponse
 from django.views.decorators.cache import cache_control,never_cache
@@ -12,10 +13,26 @@ def home(request):
     # Fetch products with 'high' priority
     high_priority_products = Product.objects.filter(priority='high').order_by('-id')
     products_with_images, page_obj = get_paginated_products(request, high_priority_products, per_page=8)
+    
+    # Calculate cart count
+    if request.user.is_authenticated:
+        cart = Cart.objects.filter(customer=request.user).first()
+        cart_count = cart.items.count() if cart else 0
+        wishlist = Wishlist.objects.filter(user=request.user).first()
+        wishlist_count = wishlist.items.count() if wishlist else 0
+
+    else:
+        cart_count = 0
+        wishlist_count = 0
+
+
     return render(request, 'products/home.html', {
         'products_with_images': products_with_images,
         'page_obj': page_obj,
         'username': request.user.username,  # Add username to context
+        'cart_count': cart_count,  # Add cart count to context
+        'wishlist_count': wishlist_count,  # Add wishlist count to context
+
     })
 
 
@@ -70,6 +87,16 @@ def product_details(request, pk):
         for related_product in related_products
     ]
 
+    if request.user.is_authenticated:
+        cart = Cart.objects.filter(customer=request.user).first()
+        cart_count = cart.items.count() if cart else 0
+        wishlist = Wishlist.objects.filter(user=request.user).first()
+        wishlist_count = wishlist.items.count() if wishlist else 0
+
+    else:
+        cart_count = 0
+        wishlist_count = 0
+
     context = {
         'product': product,
         'product_images': product_images,
@@ -77,6 +104,10 @@ def product_details(request, pk):
         'related_products_with_images': related_products_with_images,
         'reviews': reviews,
         'username': request.user.username,
+        'cart_count': cart_count,  # Add cart count to context
+        'wishlist_count': wishlist_count,  # Add wishlist count to context
+
+
     }
 
     # Dynamically select the template based on the category name
@@ -179,6 +210,17 @@ def shop(request):
     # Get paginated products
     products_with_images, page_obj = get_paginated_products(request, products, per_page=8)
 
+    # Calculate cart count
+    if request.user.is_authenticated:
+        cart = Cart.objects.filter(customer=request.user).first()
+        cart_count = cart.items.count() if cart else 0
+        wishlist = Wishlist.objects.filter(user=request.user).first()
+        wishlist_count = wishlist.items.count() if wishlist else 0
+    else:
+        cart_count = 0
+        wishlist_count = 0
+
+
     return render(request, 'products/shop.html', {
         'products_with_images': products_with_images,
         'page_obj': page_obj,
@@ -186,4 +228,7 @@ def shop(request):
         'categories': categories,  # Pass available categories to the template
         'sort_by': sort_by,  # Pass the current sorting option to the template
         'search_query': search_query,  # Pass search query to the template
+        'cart_count': cart_count,  # Add cart count to context
+        'wishlist_count': wishlist_count,  # Add wishlist count to context
+
     })

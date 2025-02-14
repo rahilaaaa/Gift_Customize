@@ -39,6 +39,22 @@ class Address(models.Model):
     state = models.CharField(max_length=100, verbose_name="State")
     city = models.CharField(max_length=100, verbose_name="City")
     street = models.CharField(max_length=255, verbose_name="Street Address")
+    pincode = models.CharField(max_length=20, verbose_name="Pincode")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")
+
+    def __str__(self):
+        return f"{self.name}'s Address - {self.city}, {self.state}, {self.country}"
+
+    
+class Address(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='addresses')
+    name = models.CharField(max_length=100, verbose_name="Name")
+    mobile = models.CharField(max_length=15, verbose_name="Mobile Number")
+    country = models.CharField(max_length=100, verbose_name="Country")
+    state = models.CharField(max_length=100, verbose_name="State")
+    city = models.CharField(max_length=100, verbose_name="City")
+    street = models.CharField(max_length=255, verbose_name="Street Address")
     pincode = models.CharField(max_length=20, verbose_name="Pincode", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")
@@ -46,6 +62,9 @@ class Address(models.Model):
     def __str__(self):
         return f"{self.name}'s Address - {self.city}, {self.state}, {self.country}"
 
+    def full_address(self):
+        return f"{self.name}, {self.street}, {self.city}, {self.state}, {self.country}, {self.pincode}"
+        
     class Meta:
         verbose_name = "Address"
         verbose_name_plural = "Addresses"

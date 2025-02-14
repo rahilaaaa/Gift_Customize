@@ -6,6 +6,9 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="Category Name")
@@ -35,6 +38,8 @@ class Product(models.Model):
     
     # Change the category to a ForeignKey to Category model
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Category")
+    default_variant = models.ForeignKey('ProductVariant', null=True, blank=True, on_delete=models.SET_NULL, related_name="default_for_product", verbose_name="Default Variant")
+
 
     created_at = models.DateTimeField(default=timezone.now, verbose_name="Created At")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")
@@ -81,16 +86,6 @@ class Offer(models.Model):
         verbose_name_plural = "Offers"
 
 
-
-
-class ProductImage(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
-    image = models.ImageField(upload_to='products/', null=True, blank=True, verbose_name="Image")
-    
-    def __str__(self):
-        return f"Image for {self.product.title}"
-
-
 class ProductVariant(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="variants")
     color = models.CharField(max_length=50, null=True, blank=True, verbose_name="Color")
@@ -124,6 +119,16 @@ class ProductVariant(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()  # Ensures validation is run before saving
         super().save(*args, **kwargs)
+
+
+
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
+    image = models.ImageField(upload_to='products/', null=True, blank=True, verbose_name="Image")
+    
+    def __str__(self):
+        return f"Image for {self.product.title}"
+
 
 
 
@@ -217,6 +222,30 @@ class Coupon(models.Model):
         verbose_name = "Coupon"
         verbose_name_plural = "Coupons"
 
+
+
+
+
+class CouponUsage(models.Model):
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name="coupon_usages"
+    )
+    coupon = models.ForeignKey(
+        Coupon, 
+        on_delete=models.CASCADE, 
+        related_name="coupon_usages"
+    )
+    used_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'coupon')
+        verbose_name = "Coupon Usage"
+        verbose_name_plural = "Coupon Usages"
+
+    def __str__(self):
+        return f"{self.user} used {self.coupon.code}"
 
 class CustomizationOption(models.Model):
     IMAGE = 'image'

@@ -1,39 +1,33 @@
-
 {% load static %}
 
 {% block head %}
     {% include "products/head.html" %}
 {% endblock head %}
 
-
 <body>
 
 {% block topbar %}
-
     {% include "products/topbar.html" %}
-    
 {% endblock topbar %}
 
 {% block navbar %}
-        {% include "products/navbar.html" %}
-    {% endblock navbar %}
-
+    {% include "products/navbar.html" %}
+{% endblock navbar %}
 
 <!-- Cart Page Start -->
 <div class="container-fluid py-5">
     <div class="row px-xl-5">
-
         <div class="col-lg-8 table-responsive mb-5">
+            {% if cart_items %}
             <table class="table table-bordered text-center mb-0">
                 <thead class="bg-secondary text-dark">
                     <tr>
                         <th>Products</th>
                         <th>Price</th>
-                        <th>Variant</th>
+                        {% comment %} <th>Variant</th> {% endcomment %}
                         <th>Quantity</th>
                         <th>Remove</th>
                         <th>Details</th>
-                        {% comment %} <th>Customize_content</th> {% endcomment %}
                     </tr>
                 </thead>
                 <tbody id="cartItems">
@@ -51,51 +45,41 @@
                                 <span class="product-title ms-2">{{ item.product.title }}</span>
                             </div>
                         </td>
-                        
                         <td>${{ item.price }}</td>
-                        <td> {% if item.product.category.name == '3d_crystal' %}
-                            {{ item.variant.size }}
-                        {% elif item.product.category.name == 'wallet' %}
-                            {{ item.variant.color }}
-                        {% elif item.product.category.name == 'water_bottle' %}
-                            {{ item.variant.liter }}
-                        {% else %}
-                            No Variant
-                        {% endif %}</td>
+                        {% comment %} <td>
+                            {% if item.product.category.name == '3d_crystal' %}
+                                {{ item.variant.size }}
+                            {% elif item.product.category.name == 'wallet' %}
+                                {{ item.variant.color }}
+                            {% elif item.product.category.name == 'water_bottle' %}
+                                {{ item.variant.liter }}
+                            {% else %}
+                                No Variant
+                            {% endif %}
+                        </td> {% endcomment %}
                         <td>
-                            
-                                {{ item.quantity }}
-                            
+                            <input type="number" class="form-control text-center" id="quantity-{{ item.id }}" value="{{ item.quantity }}" min="1" max="{{ item.variant.quantity }}" onchange="updateQuantity({{ item.id }})">
                         </td>
                         <td>
-                            <a href="{% url 'remove_from_cart' item.id %}" class="btn btn-sm btn-danger   remove-item">Remove</a>
+                            <a href="{% url 'remove_from_cart' item.id %}" class="btn btn-sm btn-danger remove-item">Remove</a>
                         </td>
                         <td>
-                            {% comment %} <div class="customization-content">
-                              {% if item.customization %}
-                                {% if item.customization.customization_text %}
-                                  <p>{{ item.customization.customization_text }}</p>
-                                {% endif %}
-                                {% if item.customization.customization_image %}
-                                  <img src="{{ item.customization.customization_image.url }}" alt="Customization Image" class="customization-image">
-                                {% endif %}
-                              {% else %}
-                                <span>No Customization</span>
-                              {% endif %}
-                            </div> {% endcomment %}
-                            <a href="{% url 'cart_details' item.id  %}" >View</a>
-                          </td>
-                          
-                        
-                        
+                            <a href="{% url 'cart_details' item.id %}" >View</a>
+                        </td>
                     </tr>
-                    
                     {% endfor %}
                 </tbody>
-                
             </table>
+            {% else %}
+            <div class="alert alert-info text-center" role="alert">
+                Your cart is empty.
+                <br>
+                <a href="{% url 'shop' %}" class="btn btn-primary mt-3">Shop Now</a>
+            </div>
+            {% endif %}
         </div>
 
+        {% if cart_items %}
         <div class="col-lg-4">
             <form class="mb-5" action="{% url 'apply_coupon' %}" method="POST">
                 {% csrf_token %}
@@ -105,8 +89,30 @@
                         <button class="btn btn-primary" type="submit">Apply Coupon</button>
                     </div>
                 </div>
+                <br>
+                {% if meets_minimum_purchase %}
+                <div class="input-group">
+                    <div class="input-group-append">
+                        <button class="btn btn-secondary" type="button" onclick="toggleCoupons()">Show Coupons</button>
+                    </div>
+                </div>
+                {% endif %}
             </form>
-            
+
+            <div id="couponsSection" class="card border-secondary mb-5" style="display: none;">
+                <div class="card-header bg-secondary border-0">
+                    <h4 class="font-weight-semi-bold m-0">Available Coupons</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for coupon in active_coupons %}
+                        <li class="list-group-item">
+                            <strong>{{ coupon.code }}</strong>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
 
             <div class="card border-secondary mb-5">
                 <div class="card-header bg-secondary border-0">
@@ -123,29 +129,26 @@
                         <h6 class="font-weight-medium">Coupon Discount</h6>
                         <h6 class="text-success">-${{ request.session.coupon_discount }}</h6>
                     </div>
-                    {% endif %}  
-                    
+                    {% endif %}
                     
                     <div class="d-flex justify-content-between">
                         <h6 class="font-weight-medium">Shipping</h6>
                         <h6>${{ shipping_cost }}</h6>
                     </div>
-                    </div>
-                    
-                    <div class="card-footer border-secondary bg-transparent">
+                </div>
+                
+                <div class="card-footer border-secondary bg-transparent">
                     <div class="d-flex justify-content-between mt-2">
                         <h5 class="font-weight-bold">Total</h5>
                         <h5 id="cartTotal">${{ total|floatformat:2 }}</h5>
                     </div>
                     <a href="{% url 'checkout' %}" class="btn btn-block btn-primary my-3 py-3">Proceed To Checkout</a>
-
                 </div>
-                
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
-
 
 <style>
     .product-info {
@@ -167,32 +170,81 @@
 
     /* Customization Content Styles */
     .customization-content {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    justify-content: center;
-    text-align: center;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: center;
+        text-align: center;
     }
 
     .customization-content img {
-    max-width: 80px;
-    max-height: 80px;
-    border-radius: 8px;
-    object-fit: cover;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        max-width: 80px;
+        max-height: 80px;
+        border-radius: 8px;
+        object-fit: cover;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     }
 
     .customization-content p {
-    font-size: 14px;
-    color: #333;
-    margin: 0;
-    max-width: 120px;
-    word-wrap: break-word;
+        font-size: 14px;
+        color: #333;
+        margin: 0;
+        max-width: 120px;
+        word-wrap: break-word;
+    }
+</style>
+
+<script>
+    function updateQuantity(itemId) {
+        const quantityInput = document.getElementById(`quantity-${itemId}`);
+        let newQuantity = parseInt(quantityInput.value);
+        const maxQuantity = parseInt(quantityInput.getAttribute('max'));
+
+        if (newQuantity < 1) {
+            newQuantity = 1;
+            quantityInput.value = newQuantity;
+        } else if (newQuantity > maxQuantity) {
+            newQuantity = maxQuantity;
+            quantityInput.value = newQuantity;
+            alert("Requested quantity exceeds available stock.");
+        }
+
+        // Send AJAX request to update quantity
+        fetch("{% url 'update_cart_quantity' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({
+                item_id: itemId,
+                quantity: newQuantity
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);  // Debugging: Print the response data
+            if (data.success) {
+                document.getElementById("cartSubtotal").textContent = `$${data.subtotal.toFixed(2)}`;
+                document.getElementById("cartTotal").textContent = `$${data.total.toFixed(2)}`;
+            } else {
+                alert("Failed to update quantity.");
+            }
+        })
+        .catch(error => {
+            console.error("Error updating quantity:", error);
+        });
     }
 
-    
-</style>
-<script>
+    function toggleCoupons() {
+        const couponsSection = document.getElementById('couponsSection');
+        if (couponsSection.style.display === 'none' || couponsSection.style.display === '') {
+            couponsSection.style.display = 'block';
+        } else {
+            couponsSection.style.display = 'none';
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         // Select all remove buttons
         const removeButtons = document.querySelectorAll('.remove-item');
@@ -208,3 +260,8 @@
         });
     });
 </script>
+
+{% include "products/script.html" %}
+
+</body>
+</html>

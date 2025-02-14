@@ -1,0 +1,106 @@
+{% load static %}
+
+{% block head %}
+    {% include "products/head.html" %}
+{% endblock head %}
+
+<body>
+
+{% block topbar %}
+    {% include "products/topbar.html" %}
+{% endblock topbar %}
+
+{% block navbar %}
+    {% include "products/navbar.html" %}
+{% endblock navbar %}
+
+<div class="container-fluid py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-12">
+            <div class="card border-secondary mb-5">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Order Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive-lg">
+                        <table class="table table-bordered table-hover text-center table-sm align-middle">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th class="p-2">Product</th>
+                                    <th class="p-2">Price</th>
+                                    <th class="p-2">Qty</th>
+                                    <th class="p-2">Customization</th>
+                                    <th class="p-2">Total</th>
+                                    <th class="p-2">Date</th>
+                                    <th class="p-2">Status</th>
+                                    <th class="p-2">Coupon</th>
+                                    <th class="p-2">Discount</th>
+                                    <th class="p-2">Delivery</th>
+                                    <th class="p-2">Payment</th>
+                                    <th class="p-2">Address</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items.all %}
+                                    <tr>
+                                        <td class="p-2 text-start">
+                                            <div class="d-flex align-items-center">
+                                                {% if item.product.images.first %}
+                                                    <img src="{{ item.product.images.first.image.url }}" class="img-thumbnail me-2" style="width: 40px; height: 40px;">
+                                                {% else %}
+                                                    <img src="{% static 'path/to/default/image.jpg' %}" class="img-thumbnail me-2" style="width: 40px; height: 40px;">
+                                                {% endif %}
+                                                <div>
+                                                    <strong>{{ item.product.title }}</strong>
+                                                    <small class="d-block text-muted">{{ item.product.description }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="p-2 small">₹{{ item.price }}</td>
+                                        <td class="p-2 small">{{ item.quantity }}</td>
+                                        <td class="p-2 small">
+                                            {% if item.customization %}
+                                                <div class="customization-content">
+                                                    {% if item.customization.customization_image %}
+                                                        <img src="{{ item.customization.customization_image.url }}" class="img-thumbnail" style="width: 40px; height: 40px;">
+                                                    {% endif %}
+                                                    {% if item.customization.customization_text %}
+                                                    <p class="small m-0">{{ item.customization.customization_text }}</p>
+                                                    {% endif %}
+                                                </div>
+                                            {% else %}
+                                                No Customization
+                                            {% endif %}
+                                        </td>
+                                        <td class="p-2 small">₹{{ item.get_total_price }}</td>
+                                        <td class="p-2 small">{{ order.created_at|date:"M d, Y" }}</td>
+                                        <td class="p-2 small">
+                                            <span class="{% if order.status == 'Cancelled' %}text-danger{% elif order.status == 'Pending' %}text-warning{% else %}text-success{% endif %}">
+                                                {{ order.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td class="p-2 small">{% if item.coupon %}{{ item.coupon.code }}{% else %}No Coupon{% endif %}</td>
+                                        <td class="p-2 small">₹{% if item.coupon %}{{ item.coupon.discount_value }}{% else %}0{% endif %}</td>
+                                        <td class="p-2 small">₹{{ order.shipping_cost }}</td>
+                                        <td class="p-2 small">{{ order.payment_method }}</td>
+                                        <td class="p-2 small text-wrap" style="max-width: 180px;">
+                                            <small>{{ order.shipping_address }}</small>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <h6 class="text-end mt-4">Total: ₹{{ order.total_price }}</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+{% include "products/script.html" %}
+
+</body>
+</html>

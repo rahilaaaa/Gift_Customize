@@ -13,8 +13,14 @@ urlpatterns = [
     path('logout/',views.logout_view, name='logout'),
     path('add-address/', views.add_new_address, name='add_address'),
     path('edit_address/<int:pk>/', views.edit_address, name='edit_address'),
-    path('delete_address/<int:pk>/', views.delete_address, name='delete_address')
+    path('delete_address/<int:pk>/', views.delete_address, name='delete_address'),
+    path('cancel_order/<int:order_id>/', views.cancel_order, name='cancel_order'),
 
+    # path('my_orders/', views.my_orders, name='my_orders'),
+    path('order_detail/<int:order_id>/', views.order_detail, name='order_detail'),  # Add this line for order detail view
+
+    path('change_password/', views.change_password, name='change_password'),
+    path('edit_account/<int:user_id>/', views.edit_account, name='edit_account'),
    
 
 

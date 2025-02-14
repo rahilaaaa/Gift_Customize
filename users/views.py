@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib.auth import authenticate, login,logout
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, update_session_auth_hash
 from django.core.mail import send_mail
 from django.utils import timezone
 from datetime import timedelta
@@ -18,7 +18,9 @@ from datetime import datetime
 from .models import Customer
 from .models import Address
 from .forms import AddressForm  # Assuming you have a form for adding addresses
-
+from orders.models import Cart,Order
+from django.contrib.auth.decorators import login_required
+from .forms import EditAccountForm
 
 
 # Generate a 4-digit OTP
@@ -214,6 +216,11 @@ def reset_password(request, uidb64, token):
 def profile(request):
     addresses = Address.objects.filter(user=request.user)
     form = AddressForm()
+    if request.user.is_authenticated:
+        cart = Cart.objects.filter(customer=request.user).first()
+        cart_count = cart.items.count() if cart else 0
+    else:
+        cart_count = 0
 
     if request.method == "POST":
         form = AddressForm(request.POST)
@@ -222,10 +229,16 @@ def profile(request):
             address.user = request.user
             address.save()
             return redirect('profile')
+    orders = Order.objects.filter(customer=request.user).order_by('-created_at')
+    print("Logged-in user:", request.user)
+
 
     context = {
         'addresses': addresses,
-        'form': form
+        'form': form,
+        'cart_count': cart_count,  # Add cart count to context
+        'orders': orders
+
     }
     return render(request, 'users/profile/profile.html', context)
 
@@ -236,12 +249,20 @@ def add_new_address(request):
             address = form.save(commit=False)
             address.user = request.user  # Associate the address with the logged-in user
             address.save()
-            return redirect('profile')  # Redirect back to profile or address list
+            messages.success(request, 'Address added successfully.')
+            return redirect('profile')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
     else:
         form = AddressForm()
 
     return render(request, 'users/profile/address/add_address.html', {'form': form})
 
+
+
+@login_required
 def edit_address(request, pk):
     address = get_object_or_404(Address, pk=pk)
     if request.method == 'POST':
@@ -250,6 +271,10 @@ def edit_address(request, pk):
             form.save()
             messages.success(request, 'Address updated successfully.')
             return redirect('profile')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
     else:
         form = AddressForm(instance=address)
     return render(request, 'users/profile/address/edit_address.html', {'form': form})
@@ -261,6 +286,36 @@ def delete_address(request, pk):
         messages.success(request, 'Address deleted successfully.')
         return redirect('profile')
     return render(request, 'users/profile/address/delete_address_confirm.html', {'address': address})
+
+
+# @login_required
+# def my_orders(request):
+#     print("Logged-in user:", request.user)
+#     orders = Order.objects.filter(customer=request.user).order_by('-created_at')
+#     return render(request, 'users/profile/orders/orders_list.html', {'orders': orders})
+
+
+
+@login_required
+def cancel_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id, customer=request.user)
+    if order.status == Order.PENDING:
+        order.cancel_order()
+        messages.success(request, 'Order has been cancelled successfully.')
+    else:
+        messages.error(request, 'Only pending orders can be cancelled.')
+    return redirect('profile')
+
+@login_required
+def order_detail(request, order_id):
+    print(order_id)
+    order = get_object_or_404(Order, id=order_id, customer=request.user)
+    if request.user.is_authenticated:
+        cart = Cart.objects.filter(customer=request.user).first()
+        cart_count = cart.items.count() if cart else 0
+    else:
+        cart_count = 0
+    return render(request, 'users/profile/orders/order_detail.html', {'order': order, 'cart_count': cart_count})
 
 @never_cache
 def login_view(request):  
@@ -314,6 +369,52 @@ def login_view(request):
 
     return render(request, 'users/account_login.html')
  
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        current_password = request.POST['password']
+        new_password = request.POST['npassword']
+        confirm_password = request.POST['cpassword']
+
+        if not request.user.check_password(current_password):
+            messages.error(request, 'Current password is incorrect.')
+            return redirect('change_password')
+
+        if new_password != confirm_password:
+            messages.error(request, 'New password and confirm password do not match.')
+            return redirect('change_password')
+
+        request.user.set_password(new_password)
+        request.user.save()
+        update_session_auth_hash(request, request.user)  # Important to keep the user logged in
+        messages.success(request, 'Your password has been changed successfully.')
+        return redirect('profile')
+
+   
+    return render(request, 'users/profile/account/change_password.html')
+
+
+
+@login_required
+def edit_account(request, user_id):
+    user = get_object_or_404(Customer, id=user_id)
+    if request.method == 'POST':
+        form = EditAccountForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your account has been updated successfully!')
+            return redirect('profile')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    else:
+        form = EditAccountForm(instance=user)
+
+    context = {
+        'form': form
+    }
+    return render(request, 'users/profile/account/edit_account.html', context)
 
 def contact(request):
     return render(request, 'users/contact.html')

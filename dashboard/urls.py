@@ -26,7 +26,7 @@ urlpatterns = [
     path('users/block/<int:user_id>/', views.block_user, name='block_user'),
     path('users/unblock/<int:user_id>/', views.unblock_user, name='unblock_user'),
     path('', views.login, name='login'),
-    path('logout/', views.logout_view, name='logout'),
+    path('logout/', views.logout_view, name='logout_admin'),
     path('product/edit/<int:product_id>/', views.edit_product, name='edit_product'),
     path('product/delete/<int:product_id>/', views.delete_product, name='delete_product'),
 ]

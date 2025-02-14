@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE HTML>
+<html lang="en">
+
+    {% block head %}
+        {% include "products/head.html" %}
+    {% endblock head %}
+
+<body>
+
+    {% block topbar %}
+         {% include "users/header_not_search.html" %}
+    {% endblock topbar %}
+    <main>
+
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5>Account Details</h5>
+            </div>
+            <div class="card-body">
+                <p><a class="btn btn-primary" href="{% url 'edit_account' user.id %}">Edit Account</a></p>
+                <div class="user-card">
+                    <div class="user-details mb-3">
+                        <label><strong>Username:</strong></label>
+                        <span id="username">{{ user.username }}</span>
+                    </div>
+                    <div class="user-details mb-3">
+                        <label><strong>Email:</strong></label>
+                        <span id="email">{{ user.email }}</span>
+                    </div>
+                    <div class="user-details mb-3">
+                        <label><strong>Mobile:</strong></label>
+                        <span id="mobile">{{ user.phone }}</span>
+                    </div>
+                </div>
+
+                <div class="mb-3 text-end">
+                    <p class="mt-4"><a class="" href="{% url 'change_password'  %}">Change Password</a></p>
+                </div>     
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>
+

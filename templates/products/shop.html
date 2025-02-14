@@ -12,16 +12,21 @@
 
 <body>
 
-
+{% comment %} 
 {% block not_search %}
 
     {% include "users/header_not_search.html" %}
    
 
     
-{% endblock not_search %}
+{% endblock not_search %} {% endcomment %}
 
 
+{% block topbar %}
+
+    {% include "products/topbar.html" %}
+    
+{% endblock topbar %}
 
 {% block navbar %}
         {% include "products/navbar.html" %}
@@ -121,7 +126,7 @@
                 </div>
                 <div class="card-footer d-flex justify-content-between bg-light border">
                     <a href="{% url 'product_details' item.product.id %}" class="btn btn-sm text-dark p-0"><i class="fas fa-eye text-primary mr-1"></i>Customize</a>
-                    <a href="" class="btn btn-sm text-dark p-0"><i class="bi bi-heart-fill"></i>Add To Whishlist</a>
+                    <a href="{% url "add_to_wishlist" item.product.id %}" class="btn btn-sm text-dark p-0"><i class="bi bi-heart-fill"></i>Add To Whishlist</a>
                 </div>
             </div>
         </div>

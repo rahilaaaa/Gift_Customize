@@ -63,7 +63,7 @@
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     {% for variant in product_variants %}
                         <label style="font-size: 14px; color: #555; cursor: pointer; padding: 8px 16px; border: 2px solid #007bff; border-radius: 20px; transition: all 0.3s ease;">
-                            <input type="radio" name='size' value="{{ variant.size }}" data-quantity="{{ variant.quantity }}" style="margin-right: 8px; accent-color: #007bff;" onclick="updateAvailability(this)">
+                            <input type="radio" name="size" value="{{ variant.size }}" data-quantity="{{ variant.quantity }}" style="margin-right: 8px; accent-color: #007bff;" onclick="updateAvailability(this)" {% if forloop.first %}checked{% endif %}>
                             {{ variant.size }}
                         </label>
                     {% endfor %}
@@ -101,24 +101,24 @@
             <div class="d-flex align-items-center mb-4 pt-2">
                 <div class="input-group quantity mr-3" style="width: 130px;">
                     <div class="input-group-btn">
-                        <button type="button" class="btn btn-primary btn-minus" onclick="decreaseQuantity()">
+                        {% comment %} <button type="button" class="btn btn-primary btn-minus" onclick="decreaseQuantity()">
                             <i class="fa fa-minus"></i>
-                        </button>
+                        </button> {% endcomment %}
                     </div>
-                    <input type="text" 
+                    <input type="number" 
                         class="form-control bg-secondary text-center" 
                         id="quantity" 
                         name="quantity" 
-                        value="1">
+                        value="1" 
+                        min="1">
                     <div class="input-group-btn">
-                        <button type="button" class="btn btn-primary btn-plus" onclick="increaseQuantity()">
+                        {% comment %} <button type="button" class="btn btn-primary btn-plus" onclick="increaseQuantity()">
                             <i class="fa fa-plus"></i>
-                        </button>
+                        </button> {% endcomment %}
                     </div>
                 </div>
 
                 <input type="hidden" name="product_id" value="{{ product.id }}">
-                <input type="hidden" name="size" id="selectedSize" value="{{ selected_size }}">
                 <input type="hidden" name="category" value="{{ product.category.name }}">
                 <button type="submit" class="btn btn-primary mt-1">Add To Cart</button>
         
@@ -175,59 +175,61 @@
         document.getElementById("mainImage").src = imageElement.src;
     }
 
+    // Update quantity and availability message when a size is selected
+    function updateAvailability(inputElement) {
+        const quantity = inputElement.getAttribute('data-quantity'); // Get the quantity from the clicked variant
+        const availabilityMessage = document.getElementById('availabilityMessage');
 
-        // Update quantity and availability message when a size is selected
-        function updateAvailability(inputElement) {
-            const quantity = inputElement.getAttribute('data-quantity'); // Get the quantity from the clicked variant
-            const availabilityMessage = document.getElementById('availabilityMessage');
-    
-            // Update the availability message
-            if (quantity > 0) {
-                availabilityMessage.textContent = `Only ${quantity} items left in stock`; // Use backticks for template literals
-                availabilityMessage.style.color = 'red';
-            } else {
-                availabilityMessage.textContent = 'Out of stock';
-                availabilityMessage.style.color = 'grey';
-            }
+        // Update the availability message
+        if (quantity > 0) {
+            availabilityMessage.textContent = `Only ${quantity} items left in stock`; // Use backticks for template literals
+            availabilityMessage.style.color = 'red';
+        } else {
+            availabilityMessage.textContent = 'Out of stock';
+            availabilityMessage.style.color = 'grey';
         }
 
-   
-        document.getElementById("upload-image").addEventListener("change", function() {
-                // Get the file name from the input
-                const fileName = this.files[0]?.name || "Choose image";
-                
-                // Update the label text
-                const label = this.nextElementSibling; // The corresponding label for the input
-                label.textContent = fileName;
-        });
+        // Update the max attribute of the quantity input
+        document.getElementById('quantity').max = quantity;
+    }
 
-        {% comment %} document.getElementById("addToCartButton").addEventListener("click", function () {
-            const productID = "{{ product.id }}";
-            const variantID = document.querySelector('input[name="size"]:checked')?.value || null;
-            const quantity = document.getElementById("quantity").value;
-    
-            fetch("{% url 'add_to_cart' %}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": "{{ csrf_token }}"
-                },
-                body: JSON.stringify({
-                    product_id: productID,
-                    variant_id: variantID,
-                    quantity: quantity
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message || "Added to cart!");
-            })
-            .catch(error => {
-                console.error("Error adding to cart:", error);
-            });
-        });
-        {% endcomment %}
-    
-    
-    
+    // Increase quantity in the input box
+    function increaseQuantity() {
+        const quantityInput = document.getElementById("quantity");
+        const maxQuantity = parseInt(quantityInput.max);
+        let currentQuantity = parseInt(quantityInput.value);
+
+        if (currentQuantity < maxQuantity) {
+            quantityInput.value = currentQuantity + 1;
+        } else {
+            alert("Requested quantity exceeds available stock.");
+        }
+    }
+
+    // Decrease quantity in the input box
+    function decreaseQuantity() {
+        const quantityInput = document.getElementById("quantity");
+        let currentQuantity = parseInt(quantityInput.value);
+
+        if (currentQuantity > 1) {
+            quantityInput.value = currentQuantity - 1;
+        }
+    }
+
+    document.getElementById("upload-image").addEventListener("change", function() {
+        // Get the file name from the input
+        const fileName = this.files[0]?.name || "Choose image";
+        
+        // Update the label text
+        const label = this.nextElementSibling; // The corresponding label for the input
+        label.textContent = fileName;
+    });
+
+    // Set default availability message on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const firstSizeInput = document.querySelector('input[name="size"]:checked');
+        if (firstSizeInput) {
+            updateAvailability(firstSizeInput);
+        }
+    });
 </script>

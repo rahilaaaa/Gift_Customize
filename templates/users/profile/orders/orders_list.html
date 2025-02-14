@@ -1,0 +1,58 @@
+{% load static %}
+
+<!-- Orders Page Start -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Your Orders</h5>
+    </div>
+    <div class="card-body">
+        {% if orders %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>OrderID</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Total</th>
+                        <th>Actions</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                
+                    {% for order in orders %}
+                        <tr>
+                            <td>#{{ order.id }}</td>
+                            <td>{{ order.created_at|date:"m/d/Y" }}</td>
+                            <td class="{% if order.status == 'cancelled' %}text-danger{% elif order.status == 'pending' %}text-warning{% else %}text-success{% endif %}">{{ order.get_status_display }}</td>
+                            <td>${{ order.total_price|floatformat:0 }}</td>
+                            <td>
+                                {% if order.status == 'pending' %}
+                                    <button class="btn btn-danger btn-sm" id="cancelbtn" data-order-id="{{ order.id }}" onclick="confirmOrderCancel('{{ order.id }}')">Cancel</button>
+                                {% endif %}
+                            </td>
+                            <td><a href="{% url 'order_detail' order.id %}" >View</a></td>
+                        </tr>
+                    {% endfor %}
+                 
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center">
+            <p>No orders found.</p>
+        </div>
+    {% endif %}
+    </div>
+</div>
+<!-- Orders Page End -->
+
+<script>
+    function confirmOrderCancel(orderId) {
+        if (confirm('Are you sure you want to cancel this order?')) {
+            window.location.href = '{% url "cancel_order" 0 %}'.replace('0', orderId);
+        }
+    }
+</script>
+

@@ -1,0 +1,64 @@
+{% load static %}
+
+{% block head %}
+    {% include "products/head.html" %}
+{% endblock head %}
+
+<body>
+
+{% block topbar %}
+    {% include "products/topbar.html" %}
+{% endblock topbar %}
+
+{% block navbar %}
+    {% include "products/navbar.html" %}
+{% endblock navbar %}
+
+<!-- Order Confirmation Page Start -->
+<div class="container-fluid py-5">
+    <div class="row px-xl-5">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="card border-secondary mb-5">
+                <div class="card-header bg-secondary border-0">
+                    <h4 class="font-weight-semi-bold m-0">Order Confirmation</h4>
+                </div>
+                <div class="card-body">
+                    <p>Thank you for your order!</p>
+                    <p><strong>Order ID:</strong> {{ order.id }}</p>
+                    <p><strong>Total Price:</strong> ${{ order.total_price }}</p>
+                    <p><strong>Shipping Address:</strong> {{ order.shipping_address }}</p>
+                    <p><strong>Billing Address:</strong> {{ order.billing_address }}</p>
+                    <p><strong>Payment Method:</strong> {{ order.payment_method }}</p>
+                    <p><strong>Order Status:</strong> {{ order.get_status_display }}</p>
+                    <p>
+                        {% if order.items.first.coupon %}
+                            <strong>Coupon:</strong> {{ order.items.first.coupon.code }}
+                        {% else %}
+                            <strong>Coupon:</strong> No coupon used
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="card-body">
+                    <h5 class="font-weight-semi-bold">Order Items</h5>
+                    <ul class="list-group">
+                        {% for item in order.items.all %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>{{ item.quantity }} x {{ item.product.title }}</span>                   
+                            <span>${{ item.get_total_price }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="card-footer border-secondary bg-transparent">
+                    <a href="{% url 'shop' %}" class="btn btn-block btn-primary my-3 py-3">Continue Shopping</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Order Confirmation Page End -->
+
+{% include "products/script.html" %}
+
+</body>
+</html>

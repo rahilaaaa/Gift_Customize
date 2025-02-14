@@ -1,0 +1,66 @@
+<!-- filepath: /c:/Users/mashd/OneDrive/Desktop/Program/Gift Custimization/project/zyft/templates/users/profile/dashboard.html -->
+<div class="card border-secondary mb-4">
+    <div class="card-header bg-secondary text-white">
+        <h4 class="m-0">Dashboard</h4>
+    </div>
+    <div class="card-body">
+        <h5 class="mb-4">Welcome, {{ request.user.username }}!</h5>
+        <p>Here you can find an overview of your recent activities and account information.</p>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card text-white bg-primary">
+                    <div class="card-body">
+                        <h5 class="card-title">Recent Orders</h5>
+                        <p class="card-text">View your recent orders and their status.</p>
+                        <a href="#" class="btn btn-light" id="view-orders-button">View Orders</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <h5 class="card-title">Wallet Balance</h5>
+                        <p class="card-text">Check your current wallet balance.</p>
+                        <a href="#" class="btn btn-light" id="view-wallet-button">View Wallet</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card text-white bg-info">
+                    <div class="card-body">
+                        <h5 class="card-title">Account Details</h5>
+                        <p class="card-text">Update your personal information and settings.</p>
+                        <a href="#" class="btn btn-light" id="view-account-button">Update Account</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card border-secondary">
+                    <div class="card-body">
+                        <h5 class="card-title">Recent Activities</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">Order #1234 placed on Feb 10, 2025</li>
+                            <li class="list-group-item">Wallet topped up with $50 on Feb 8, 2025</li>
+                            <li class="list-group-item">Address updated on Feb 5, 2025</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card border-secondary">
+                    <div class="card-body">
+                        <h5 class="card-title">Notifications</h5>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">Your order #1234 has been shipped.</li>
+                            <li class="list-group-item">New promotional offer available.</li>
+                            <li class="list-group-item">Your wallet balance is low.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

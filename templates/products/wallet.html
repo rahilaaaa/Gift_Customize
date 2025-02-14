@@ -32,7 +32,7 @@
                 {% endfor %}
             </div>
             <div class="d-flex justify-content-center mt-3">
-    <form action="{% url 'add_to_cart' %}" method="POST" enctype="multipart/form-data">
+                <form action="{% url 'add_to_cart' %}" method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
                     {% for variant in product_variants %}
                     <span class="variant-color" data-color="{{ variant.color }}" data-quantity="{{ variant.quantity }}" onclick="selectVariant(this);" style="font-size: 14px; margin: 0 10px; cursor: pointer;">
@@ -82,6 +82,7 @@
                         class="form-control" 
                         id="wallet-name" 
                         name="wallet-name" 
+                        required
                         placeholder="Your Wallet Name" 
                         maxlength="20" 
                         style="border: 2px solid #007bff; border-radius: 25px; padding: 10px 20px; font-size: 14px; color: #333; background-color: #f8f9fa; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); width: 100%;"
@@ -99,26 +100,27 @@
             <div class="d-flex align-items-center mb-4 pt-2">
                 <div class="input-group quantity mr-3" style="width: 130px;">
                     <div class="input-group-btn">
-                        <button type="button" class="btn btn-primary btn-minus" onclick="decreaseQuantity()">
+                        {% comment %} <button type="button" class="btn btn-primary btn-minus" onclick="decreaseQuantity()">
                             <i class="fa fa-minus"></i>
-                        </button>
+                        </button> {% endcomment %}
                     </div>
-                    <input type="text" 
+                    <input type="number" 
                         class="form-control bg-secondary text-center" 
                         id="quantity" 
                         name="quantity" 
-                        value="1">
+                        value="1" 
+                        min="1">
                     <div class="input-group-btn">
-                        <button type="button" class="btn btn-primary btn-plus" onclick="increaseQuantity()">
+                        {% comment %} <button type="button" class="btn btn-primary btn-plus" onclick="increaseQuantity()">
                             <i class="fa fa-plus"></i>
-                        </button>
+                        </button> {% endcomment %}
                     </div>
                 </div>
 
                 <input type="hidden" name="product_id" value="{{ product.id }}">
-                <input type="hidden" name="liter" id="selectedLiter" value="{{ selected_liter }}">
-                <input type="hidden" name="charm" id="selectedCharm" value="">
-                <input type="hidden" name="charmImg" id="selectedCharmImg" value="">
+                <input type="hidden" name="color" id="selectedColor" value="{{ product_variants.0.color }}">
+                <input type="hidden" name="charm" id="selectedCharm" value="{{ product_variants.0.charm }}">
+                <input type="hidden" name="charmImg" id="selectedCharmImg" value="{{ product_variants.0.charmImg.url }}">
                 <input type="hidden" name="category" value="{{ product.category.name }}">
                 <button type="submit" class="btn btn-primary mt-1">Add To Cart</button>
             </div>
@@ -157,18 +159,44 @@
         document.getElementById("mainImage").src = imageElement.src;
     }
 
-    // Update quantity and availability message when a size is selected
+    // Update quantity and availability message when a variant is selected
     function updateAvailability(inputElement) {
         const quantity = inputElement.getAttribute('data-quantity'); // Get the quantity from the clicked variant
         const availabilityMessage = document.getElementById('availabilityMessage');
 
         // Update the availability message
         if (quantity > 0) {
-            availabilityMessage.textContent = `Only ${quantity} items left in stock`;
+            availabilityMessage.textContent = `Only ${quantity} items left in stock`; // Use backticks for template literals
             availabilityMessage.style.color = 'red';
         } else {
             availabilityMessage.textContent = 'Out of stock';
             availabilityMessage.style.color = 'grey';
+        }
+
+        // Update the max attribute of the quantity input
+        document.getElementById('quantity').max = quantity;
+    }
+
+    // Increase quantity in the input box
+    function increaseQuantity() {
+        const quantityInput = document.getElementById("quantity");
+        const maxQuantity = parseInt(quantityInput.max);
+        let currentQuantity = parseInt(quantityInput.value);
+
+        if (currentQuantity < maxQuantity) {
+            quantityInput.value = currentQuantity + 1;
+        } else {
+            alert("Requested quantity exceeds available stock.");
+        }
+    }
+
+    // Decrease quantity in the input box
+    function decreaseQuantity() {
+        const quantityInput = document.getElementById("quantity");
+        let currentQuantity = parseInt(quantityInput.value);
+
+        if (currentQuantity > 1) {
+            quantityInput.value = currentQuantity - 1;
         }
     }
 
@@ -180,10 +208,16 @@
             item.style.backgroundColor = "transparent";
         });
 
+        // Highlight the selected variant
+        element.style.border = "2px solid #007bff";
+
         // Perform actions with the selected variant
         const color = element.getAttribute('data-color');
         const quantity = element.getAttribute('data-quantity');
         updateAvailability(element);
+
+        // Update hidden input fields
+        document.getElementById('selectedColor').value = color;
     }
 
     // Function to handle charm selection
@@ -201,25 +235,17 @@
         document.getElementById('selectedCharmImg').value = charmImg;
     }
 
-    // Increase quantity in the input box
-    function increaseQuantity() {
-        var quantity = document.getElementById("quantity");
-        quantity.value = parseInt(quantity.value) + 1;
-    }
-
-    // Decrease quantity in the input box
-    function decreaseQuantity() {
-        var quantity = document.getElementById("quantity");
-        if (quantity.value > 1) {
-            quantity.value = parseInt(quantity.value) - 1;
-        }
-    }
-
     // Optional: Set initial availability message on page load
     document.addEventListener('DOMContentLoaded', function() {
         const firstVariant = document.querySelector('.variant-color');
         if (firstVariant) {
             updateAvailability(firstVariant);
+        }
+
+        // Select the first charm by default
+        const firstCharm = document.querySelector('.charm-item');
+        if (firstCharm) {
+            selectCharm(firstCharm, firstCharm.getAttribute('data-charm'), firstCharm.getAttribute('data-charmImg'));
         }
     });
 </script>
