@@ -38,12 +38,12 @@
                     <a href="#" class="list-group-item list-group-item-action menu-link" id="my-account-link">
                         <i class="bi bi-person-circle"></i> Account Details
                     </a>
-                    {% comment %} <a href="#" class="list-group-item list-group-item-action menu-link" id="referral-link">
+                    <a href="#" class="list-group-item list-group-item-action menu-link" id="referral-link">
                         <i class="bi bi-person-plus"></i> Referral
-                    </a> {% endcomment %}
-                    {% comment %} <a href="#" class="list-group-item list-group-item-action menu-link" id="transaction-link">
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action menu-link" id="transaction-link">
                         <i class="bi bi-cash-stack"></i> Transaction
-                    </a> {% endcomment %}
+                    </a>
                     <a href="{% url 'logout' %}" class="list-group-item list-group-item-action text-danger">
                         <i class="bi bi-box-arrow-right"></i> Logout
                     </a>
@@ -68,6 +68,12 @@
             <div id="account-details-content" style="display: none;">
                 {% include "users/profile/account/account_details.html" %}
             </div>
+            <div id="referral-content" style="display: none;">
+                {% include "users/profile/referrel/referal.html" %}
+            </div>
+            <div id="transaction-content" style="display: none;">
+                {% include "users/profile/transaction/transaction.html" %}
+            </div>
             <div id="default-profile-content">
                 <div class="card border-secondary mb-4">
                     <div class="card-header bg-secondary text-white">
@@ -91,6 +97,8 @@
         document.getElementById('dashboard-content').style.display = 'none';
         document.getElementById('wallet-content').style.display = 'none';
         document.getElementById('account-details-content').style.display = 'none';
+        document.getElementById('referral-content').style.display = 'none';
+        document.getElementById('transaction-content').style.display = 'none';
         document.getElementById('address-list-content').style.display = 'block';
     });
 
@@ -101,6 +109,8 @@
         document.getElementById('dashboard-content').style.display = 'none';
         document.getElementById('wallet-content').style.display = 'none';
         document.getElementById('account-details-content').style.display = 'none';
+        document.getElementById('referral-content').style.display = 'none';
+        document.getElementById('transaction-content').style.display = 'none';
         document.getElementById('orders-list-content').style.display = 'block';
     });
 
@@ -111,6 +121,8 @@
         document.getElementById('orders-list-content').style.display = 'none';
         document.getElementById('wallet-content').style.display = 'none';
         document.getElementById('account-details-content').style.display = 'none';
+        document.getElementById('referral-content').style.display = 'none';
+        document.getElementById('transaction-content').style.display = 'none';
         document.getElementById('dashboard-content').style.display = 'block';
     });
 
@@ -121,6 +133,8 @@
         document.getElementById('orders-list-content').style.display = 'none';
         document.getElementById('dashboard-content').style.display = 'none';
         document.getElementById('account-details-content').style.display = 'none';
+        document.getElementById('referral-content').style.display = 'none';
+        document.getElementById('transaction-content').style.display = 'none';
         document.getElementById('wallet-content').style.display = 'block';
     });
 
@@ -131,6 +145,8 @@
         document.getElementById('orders-list-content').style.display = 'none';
         document.getElementById('dashboard-content').style.display = 'none';
         document.getElementById('account-details-content').style.display = 'none';
+        document.getElementById('referral-content').style.display = 'none';
+        document.getElementById('transaction-content').style.display = 'none';
         document.getElementById('wallet-content').style.display = 'block';
     });
 
@@ -141,6 +157,8 @@
         document.getElementById('wallet-content').style.display = 'none';
         document.getElementById('dashboard-content').style.display = 'none';
         document.getElementById('account-details-content').style.display = 'none';
+        document.getElementById('referral-content').style.display = 'none';
+        document.getElementById('transaction-content').style.display = 'none';
         document.getElementById('orders-list-content').style.display = 'block';
     });
 
@@ -151,6 +169,8 @@
         document.getElementById('wallet-content').style.display = 'none';
         document.getElementById('dashboard-content').style.display = 'none';
         document.getElementById('orders-list-content').style.display = 'none';
+        document.getElementById('referral-content').style.display = 'none';
+        document.getElementById('transaction-content').style.display = 'none';
         document.getElementById('account-details-content').style.display = 'block';
     });
 
@@ -161,7 +181,33 @@
         document.getElementById('orders-list-content').style.display = 'none';
         document.getElementById('wallet-content').style.display = 'none';
         document.getElementById('dashboard-content').style.display = 'none';
+        document.getElementById('referral-content').style.display = 'none';
+        document.getElementById('transaction-content').style.display = 'none';
         document.getElementById('account-details-content').style.display = 'block';
+    });
+
+    document.getElementById('referral-link').addEventListener('click', function(event) {
+        event.preventDefault();
+        document.getElementById('default-profile-content').style.display = 'none';
+        document.getElementById('address-list-content').style.display = 'none';
+        document.getElementById('orders-list-content').style.display = 'none';
+        document.getElementById('wallet-content').style.display = 'none';
+        document.getElementById('dashboard-content').style.display = 'none';
+        document.getElementById('account-details-content').style.display = 'none';
+        document.getElementById('transaction-content').style.display = 'none';
+        document.getElementById('referral-content').style.display = 'block';
+    });
+
+    document.getElementById('transaction-link').addEventListener('click', function(event) {
+        event.preventDefault();
+        document.getElementById('default-profile-content').style.display = 'none';
+        document.getElementById('address-list-content').style.display = 'none';
+        document.getElementById('orders-list-content').style.display = 'none';
+        document.getElementById('wallet-content').style.display = 'none';
+        document.getElementById('dashboard-content').style.display = 'none';
+        document.getElementById('account-details-content').style.display = 'none';
+        document.getElementById('referral-content').style.display = 'none';
+        document.getElementById('transaction-content').style.display = 'block';
     });
 
     // Add active class to the selected menu link

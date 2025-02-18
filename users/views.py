@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect,get_object_or_404
+from django.shortcuts import render, redirect,get_object_or_404,resolve_url
 from django.contrib.auth import authenticate, login,logout
 from django.contrib.auth import get_user_model, update_session_auth_hash
 from django.core.mail import send_mail
@@ -15,10 +15,10 @@ from django.urls import reverse
 from django.views.decorators.cache import never_cache,cache_control
 from django.utils.timezone import now, timedelta
 from datetime import datetime
-from .models import Customer
+from .models import Customer,Transaction
 from .models import Address
 from .forms import AddressForm  # Assuming you have a form for adding addresses
-from orders.models import Cart,Order
+from orders.models import Cart,Order,Wishlist
 from django.contrib.auth.decorators import login_required
 from .forms import EditAccountForm
 
@@ -219,8 +219,11 @@ def profile(request):
     if request.user.is_authenticated:
         cart = Cart.objects.filter(customer=request.user).first()
         cart_count = cart.items.count() if cart else 0
+        wishlist = Wishlist.objects.filter(user=request.user).first()
+        wishlist_count = wishlist.items.count() if wishlist else 0
     else:
         cart_count = 0
+        wishlist_count = 0
 
     if request.method == "POST":
         form = AddressForm(request.POST)
@@ -232,17 +235,24 @@ def profile(request):
     orders = Order.objects.filter(customer=request.user).order_by('-created_at')
     print("Logged-in user:", request.user)
 
-
+    transactions = Transaction.objects.filter(user=request.user)
     context = {
         'addresses': addresses,
         'form': form,
         'cart_count': cart_count,  # Add cart count to context
-        'orders': orders
-
+        'orders': orders,
+        'wishlist_count': wishlist_count,  # Add wishlist count to context
+        'transactions': transactions,
     }
     return render(request, 'users/profile/profile.html', context)
 
+
+
+
 def add_new_address(request):
+    # First, get `next` from GET if available, otherwise fallback to POST, then default to 'profile'
+    next_url = request.GET.get('next', request.POST.get('next', 'profile'))  
+
     if request.method == 'POST':
         form = AddressForm(request.POST)
         if form.is_valid():
@@ -250,7 +260,9 @@ def add_new_address(request):
             address.user = request.user  # Associate the address with the logged-in user
             address.save()
             messages.success(request, 'Address added successfully.')
-            return redirect('profile')
+
+            # Ensure `next_url` is a valid path or named URL
+            return redirect(resolve_url(next_url))  
         else:
             for field, errors in form.errors.items():
                 for error in errors:
@@ -258,8 +270,7 @@ def add_new_address(request):
     else:
         form = AddressForm()
 
-    return render(request, 'users/profile/address/add_address.html', {'form': form})
-
+    return render(request, 'users/profile/address/add_address.html', {'form': form, 'next_url': next_url})
 
 
 @login_required
@@ -416,6 +427,8 @@ def edit_account(request, user_id):
     }
     return render(request, 'users/profile/account/edit_account.html', context)
 
-def contact(request):
-    return render(request, 'users/contact.html')
 
+
+def transaction_detail(request, transaction_id):
+    transaction = get_object_or_404(Transaction, id=transaction_id)
+    return render(request, 'users/profile/transaction/transaction_detail.html', {'transaction': transaction})

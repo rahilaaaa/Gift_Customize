@@ -1,0 +1,36 @@
+<!-- filepath: /c:/Users/mashd/OneDrive/Desktop/Program/Gift Custimization/project/zyft/templates/users/profile/transaction/transaction.html -->
+<div class="card border-secondary mb-4">
+    <div class="card-header bg-secondary text-white">
+        <h4 class="m-0">Transaction History</h4>
+    </div>
+    <div class="card-body">
+        {% if transactions %}
+            <table class="table table-bordered">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">Date</th>
+                        <th scope="col">Amount</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in transactions %}
+                        <tr>
+                            <td>{{ transaction.date|date:"Y-m-d H:i" }}</td>
+                            <td>${{ transaction.amount|floatformat:0 }}</td>
+                            <td>{{ transaction.status }}</td>
+                            <td>
+                                <a href="{% url 'transaction_detail' transaction.id %}" class="btn btn-sm btn-primary">View</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="alert alert-info text-center" role="alert">
+                No transactions found.
+            </div>
+        {% endif %}
+    </div>
+</div>

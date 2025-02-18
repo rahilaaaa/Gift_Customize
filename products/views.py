@@ -5,7 +5,9 @@ from orders.models import Cart,Wishlist
 from .helpers import get_paginated_products
 from django.http import JsonResponse
 from django.views.decorators.cache import cache_control,never_cache
-
+from django.db.models import Avg
+from django.contrib.contenttypes.models import ContentType
+from .models import Offer
 
 
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
@@ -43,6 +45,24 @@ def product_details(request, pk):
     product_images = product.images.all()
     product_variants = product.variants.all()
     reviews = product.reviews.all()
+
+    # Check for product-specific offer
+    product_content_type = ContentType.objects.get_for_model(Product)
+    product_offer = Offer.objects.filter(content_type=product_content_type, object_id=product.id, status='active').first()
+
+    # Check for category-specific offer if no product-specific offer exists
+    category_offer = None
+    if not product_offer:
+        category_content_type = ContentType.objects.get_for_model(Category)
+        category_offer = Offer.objects.filter(content_type=category_content_type, object_id=product.category.id, status='active').first()
+
+    # Determine the final offer to apply
+    final_offer = product_offer or category_offer
+
+    # Calculate the discounted price if an offer is available
+    discounted_price = None
+    if final_offer:
+        discounted_price = product.price * (1 - final_offer.offer_percentage / 100)
 
     if request.method == "POST":
         # Handle review submission
@@ -106,16 +126,20 @@ def product_details(request, pk):
         'username': request.user.username,
         'cart_count': cart_count,  # Add cart count to context
         'wishlist_count': wishlist_count,  # Add wishlist count to context
+        'final_offer': final_offer,  # Add final offer to context
+        'discounted_price': discounted_price,  # Add discounted price to context
 
 
     }
 
+
+
     # Dynamically select the template based on the category name
-    if product.category and product.category.name == '3d_crystal':
+    if product.category and product.category.name == '3d crystal':
         template = 'products/3d_crystal_product_details.html'
     elif product.category and product.category.name == 'wallet':
         template = 'products/wallet.html'
-    elif product.category and product.category.name == 'water_bottle':
+    elif product.category and product.category.name == 'water bottle':
         template = 'products/bottle.html'
     else:
         template = 'products/product_details.html'  # Default template
@@ -199,13 +223,21 @@ def shop(request):
     if search_query:
         products = products.filter(title__icontains=search_query)  # Filter by product name
 
-    # Apply sorting based on the sort parameter
+ # Apply sorting based on the sort parameter
     if sort_by == 'latest':
         products = products.order_by('-created_at')  # Sort by creation date, most recent first
     elif sort_by == 'low_to_high':
         products = products.order_by('price')  # Sort by price low to high
     elif sort_by == 'high_to_low':
         products = products.order_by('-price')  # Sort by price high to low
+    elif sort_by == 'featured':
+        products = products.filter(priority='high')  # Filter by featured products
+    elif sort_by == 'average_rating':
+        products = products.annotate(average_rating=Avg('reviews__rating')).order_by('-average_rating')  # Sort by average rating
+    elif sort_by == 'a_to_z':
+        products = products.order_by('title')  # Sort by title A-Z
+    elif sort_by == 'z_to_a':
+        products = products.order_by('-title')  # Sort by title Z-A
 
     # Get paginated products
     products_with_images, page_obj = get_paginated_products(request, products, per_page=8)

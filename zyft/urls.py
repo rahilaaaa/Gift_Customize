@@ -9,7 +9,7 @@ urlpatterns = [
     path('admin/',include('dashboard.urls')),
     path('accounts/', include('allauth.urls')),
     path('orders/',include('orders.urls')),
-
+    path('chatbot/',include('chatbot.urls')),
     
 ]
 

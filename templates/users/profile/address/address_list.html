@@ -7,7 +7,7 @@
         <h4 class="m-0">Your Addresses</h4>
     </div>
     <div class="card-body">
-        <a href=" {% url 'add_address' %}" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+        <a href=" {% url 'add_address' %}?next={% url 'profile' %}" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAddressModal">
             Add New Address
         </a>
 

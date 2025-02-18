@@ -50,28 +50,44 @@
                     <small class="fas fa-star-half-alt"></small>
                     <small class="far fa-star"></small>
                 </div>
-                <small class="pt-1">({{reviews|length }})</small>
+                <small class="pt-1">({{ reviews|length }})</small>
             </div>
-            <h3>${{ product.price }}</h3>
+            <!-- Special Offer Section -->
+            {% if final_offer %}
+            <div style="margin-bottom: 20px;">
+                <h5 style="color: #28a745; font-weight: bold; display: inline;">{{ final_offer.offer_name }}</h5>
+                <p style="color: #155724; display: inline;"> {{ final_offer.offer_description }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Price Section -->
+            <h3>
+                {% if discounted_price %}
+                <span style="text-decoration: line-through; color: #999; font-size: 0.7em;"> ₹{{ product.price }}</span>
+                <span style="color: #D19C97;"> ₹{{ discounted_price|floatformat:2 }}</span>
+                {% else %}
+                <span style="color: #D19C97;"> ₹{{ product.price }}</span>
+                {% endif %}
+            </h3>
             <p>{{ product.description }}</p>
 
             <!-- Sizes Section -->
-        <form action="{% url 'add_to_cart' %}" method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div style="padding: 15px; background-color: #f8f9fa; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
-                <p style="font-size: 16px; color: #333; font-weight: bold;">Sizes:</p>
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                    {% for variant in product_variants %}
-                        <label style="font-size: 14px; color: #555; cursor: pointer; padding: 8px 16px; border: 2px solid #007bff; border-radius: 20px; transition: all 0.3s ease;">
-                            <input type="radio" name="size" value="{{ variant.size }}" data-quantity="{{ variant.quantity }}" style="margin-right: 8px; accent-color: #007bff;" onclick="updateAvailability(this)" {% if forloop.first %}checked{% endif %}>
-                            {{ variant.size }}
-                        </label>
-                    {% endfor %}
+            <form action="{% url 'add_to_cart' %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div style="padding: 15px;">
+                    <p style="font-size: 16px; color: #333; font-weight: bold;">Sizes:</p>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        {% for variant in product_variants %}
+                            <label style="font-size: 14px; color: #555; cursor: pointer; padding: 8px 16px; border: 2px solid #007bff; border-radius: 20px; transition: all 0.3s ease;">
+                                <input type="radio" name="size" value="{{ variant.size }}" data-quantity="{{ variant.quantity }}" style="margin-right: 8px; accent-color: #007bff;" onclick="updateAvailability(this)" {% if forloop.first %}checked{% endif %}>
+                                {{ variant.size }}
+                            </label>
+                        {% endfor %}
+                    </div>
                 </div>
-            </div>
 
-           <!-- Image View Type Dropdown Section -->
-                <div style="padding: 20px; background-color: #f8f9fa; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); margin-top: 20px;">
+                <!-- Image View Type Dropdown Section -->
+                <div style="padding: 20px; margin-top: 20px;">
                     <p style="font-size: 16px; color: #333; font-weight: bold; margin-bottom: 15px;">Choose Image ViewFlex:</p>
                     <select name="view-type" id="view-type-dropdown" style="font-size: 14px; padding: 10px 20px; border: 2px solid #007bff; border-radius: 10px; width: 100%; max-width: 300px; background-color: #fff; color: #333; cursor: pointer; transition: all 0.3s ease;">
                         {% for variant in product_variants %}
@@ -84,47 +100,42 @@
                     </select>
                 </div>
 
-
-            
-            <!-- Upload Image Section -->
-            <div class="d-flex mb-4" style="margin-top: 20px;">
-                <p class="text-dark font-weight-medium mb-0 mr-3">Upload Image:</p>
-                
-                
+                <!-- Upload Image Section -->
+                <div class="d-flex mb-4" style="margin-top: 20px;">
+                    <p class="text-dark font-weight-medium mb-0 mr-3">Upload Image:</p>
                     <div class="custom-file">
                         <input type="file" class="custom-file-input" id="upload-image" name="image" style="cursor: pointer;" required>
                         <label class="custom-file-label" for="upload-image">Choose image</label>
                     </div>
-            </div>
-
-            <!-- Quantity and Add to Cart Section -->
-            <div class="d-flex align-items-center mb-4 pt-2">
-                <div class="input-group quantity mr-3" style="width: 130px;">
-                    <div class="input-group-btn">
-                        {% comment %} <button type="button" class="btn btn-primary btn-minus" onclick="decreaseQuantity()">
-                            <i class="fa fa-minus"></i>
-                        </button> {% endcomment %}
-                    </div>
-                    <input type="number" 
-                        class="form-control bg-secondary text-center" 
-                        id="quantity" 
-                        name="quantity" 
-                        value="1" 
-                        min="1">
-                    <div class="input-group-btn">
-                        {% comment %} <button type="button" class="btn btn-primary btn-plus" onclick="increaseQuantity()">
-                            <i class="fa fa-plus"></i>
-                        </button> {% endcomment %}
-                    </div>
                 </div>
 
-                <input type="hidden" name="product_id" value="{{ product.id }}">
-                <input type="hidden" name="category" value="{{ product.category.name }}">
-                <button type="submit" class="btn btn-primary mt-1">Add To Cart</button>
-        
-            </div>
-        </form>
-                
+                <!-- Quantity and Add to Cart Section -->
+                <div class="d-flex align-items-center mb-4 pt-2" id="quantitySection">
+                    <div class="input-group quantity mr-3" style="width: 130px;">
+                        {% comment %} <div class="input-group-btn">
+                            <button type="button" class="btn btn-primary btn-minus" onclick="decreaseQuantity()">
+                                <i class="fa fa-minus"></i>
+                            </button>
+                        </div> {% endcomment %}
+                        <input type="number" 
+                            class="form-control bg-secondary text-center" 
+                            id="quantity" 
+                            name="quantity" 
+                            value="1" 
+                            min="1">
+                        {% comment %} <div class="input-group-btn">
+                            <button type="button" class="btn btn-primary btn-plus" onclick="increaseQuantity()">
+                                <i class="fa fa-plus"></i>
+                            </button>
+                        </div> {% endcomment %}
+                    </div>
+
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <input type="hidden" name="category" value="{{ product.category.name }}">
+                    <button type="submit" class="btn btn-primary mt-1" id="addToCartButton">Add To Cart</button>
+                </div>
+            </form>
+
             <!-- Availability Section -->
             <div id="availabilitySection">
                 <h6>Availability: <span id="availabilityMessage"></span></h6>
@@ -132,42 +143,24 @@
         </div>
     </div>
 </div>
-
 <!-- Product Detail End -->
-
 
 <!-- Reviews Section -->
 {% block review %}
     {% include "products/review.html" %}
 {% endblock review %}
 
-  
 {% block related_product %}
     {% include "products/related_products.html" %}
 {% endblock related_product %}
- 
 
-    {% block footer %}
-        {% include "products/footer.html" %}
-    {% endblock footer %}
+{% block footer %}
+    {% include "products/footer.html" %}
+{% endblock footer %}
 
-
-
-
-    <!-- Back to Top -->
-    <a href="#" class="btn btn-primary back-to-top"><i class="fa fa-angle-double-up"></i></a>
-    {% include "products/script.html" %}
-
-    
-
-    
-    
-   
-    
-
-</body>
-
-</html>  
+<!-- Back to Top -->
+<a href="#" class="btn btn-primary back-to-top"><i class="fa fa-angle-double-up"></i></a>
+{% include "products/script.html" %}
 
 <script>
     // Change image on thumbnail click
@@ -179,14 +172,20 @@
     function updateAvailability(inputElement) {
         const quantity = inputElement.getAttribute('data-quantity'); // Get the quantity from the clicked variant
         const availabilityMessage = document.getElementById('availabilityMessage');
+        const quantitySection = document.getElementById('quantitySection');
+        const addToCartButton = document.getElementById('addToCartButton');
 
         // Update the availability message
         if (quantity > 0) {
             availabilityMessage.textContent = `Only ${quantity} items left in stock`; // Use backticks for template literals
-            availabilityMessage.style.color = 'red';
+            availabilityMessage.style.color = '#D19C97';
+            quantitySection.style.display = 'flex';
+            addToCartButton.disabled = false;
         } else {
             availabilityMessage.textContent = 'Out of stock';
-            availabilityMessage.style.color = 'grey';
+            availabilityMessage.style.color = 'red';
+            quantitySection.style.display = 'none';
+            addToCartButton.disabled = true;
         }
 
         // Update the max attribute of the quantity input
@@ -233,3 +232,6 @@
         }
     });
 </script>
+
+</body>
+</html>

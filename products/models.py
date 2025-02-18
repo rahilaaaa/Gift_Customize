@@ -95,6 +95,7 @@ class ProductVariant(models.Model):
     viewflex = models.CharField(max_length=50, null=True, blank=True, verbose_name="Viewflex")
     charm = models.CharField(max_length=50, null=True, blank=True, verbose_name="Charm")
     charmImg = models.ImageField(upload_to='products/', null=True, blank=True, verbose_name="CharmImg")
+    is_valid_combination = models.BooleanField(default=True)  # Add this field to mark valid combinations
     
     def __str__(self):
         variant = f"{self.color}" if self.color else ""
@@ -200,6 +201,11 @@ class Coupon(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+
+    def save(self, *args, **kwargs):
+        self.code = self.code.lower()  # Convert code to lowercase before saving
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.code

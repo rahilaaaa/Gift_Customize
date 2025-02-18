@@ -39,12 +39,12 @@
                 </div>
               </label>
             {% empty %}
-              <p>No addresses found. <a href="{% url 'add_address' %}" class="text-primary">Add a new address</a></p>
+              <p>No addresses found. <a href="{% url 'add_address' %}?next={% url 'checkout' %}" class="text-primary">Add a new address</a></p>
             {% endfor %}
           </div>
         </div>
         <div class="card-footer border-secondary bg-transparent">
-          <a href="{% url 'add_address' %}" class="btn btn-primary">Click here to Add New Address</a>
+          <a href="{% url 'add_address' %}?next=/orders/checkout/" class="btn btn-primary">Click here to Add New Address</a>
         </div>
       </div>
     </div>

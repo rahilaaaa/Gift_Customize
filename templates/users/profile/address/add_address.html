@@ -35,8 +35,10 @@
 
                     <form method="post">
                         {% csrf_token %}
+
                         <div class="row">
                             {% for field in form %}
+                            <input type="hidden" name="next" value="{{ next_url }}">  
                             <div class="col-md-6 mb-4">
                                 <label for="{{ field.id_for_label }}" class="form-label fw-bold">{{ field.label }}</label>
                                 {{ field }}

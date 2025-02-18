@@ -44,7 +44,23 @@
                 </div>
                 <small class="pt-1">({{reviews|length }})</small>
             </div>
-            <h3>${{ product.price }}</h3>
+            <!-- Special Offer Section -->
+            {% if final_offer %}
+            <div style="margin-bottom: 20px;">
+                <h5 style="color: #28a745; font-weight: bold; display: inline;">{{ final_offer.offer_name }}</h5>
+                <p style="color: #155724; display: inline;"> {{ final_offer.offer_description }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Price Section -->
+            <h3>
+                {% if discounted_price %}
+                <span style="text-decoration: line-through; color: #999; font-size: 0.7em;"> ₹{{ product.price }}</span>
+                <span style="color: #D19C97;"> ₹{{ discounted_price|floatformat:2 }}</span>
+                {% else %}
+                <span style="color:#D19C97;"> ₹{{ product.price }}</span>
+                {% endif %}
+            </h3>
             <p>{{ product.description }}</p>
 
             <!-- Sizes Section -->
@@ -86,7 +102,7 @@
                 </div>
 
                 <!-- Quantity and Add to Cart Section -->
-                <div class="d-flex align-items-center mb-4 pt-2">
+                <div class="d-flex align-items-center mb-4 pt-2" id="quantitySection">
                     <div class="input-group quantity mr-3" style="width: 130px;">
                         <div class="input-group-btn">
                             {% comment %} <button type="button" class="btn btn-primary btn-minus" onclick="decreaseQuantity()">
@@ -108,7 +124,7 @@
 
                     <input type="hidden" name="product_id" value="{{ product.id }}">
                     <input type="hidden" name="category" value="{{ product.category.name }}">
-                    <button type="submit" class="btn btn-primary mt-1">Add To Cart</button>
+                    <button type="submit" class="btn btn-primary mt-1" id="addToCartButton">Add To Cart</button>
                 </div>
             </form>
 
@@ -149,14 +165,20 @@
     function updateAvailability(inputElement) {
         const quantity = inputElement.getAttribute('data-quantity'); // Get the quantity from the clicked variant
         const availabilityMessage = document.getElementById('availabilityMessage');
+        const quantitySection = document.getElementById('quantitySection');
+        const addToCartButton = document.getElementById('addToCartButton');
 
         // Update the availability message
         if (quantity > 0) {
             availabilityMessage.textContent = `Only ${quantity} items left in stock`; // Use backticks for template literals
-            availabilityMessage.style.color = 'red';
+            availabilityMessage.style.color = '#D19C97';
+            quantitySection.style.display = 'flex';
+            addToCartButton.disabled = false;
         } else {
             availabilityMessage.textContent = 'Out of stock';
-            availabilityMessage.style.color = 'grey';
+            availabilityMessage.style.color = 'red';
+            quantitySection.style.display = 'none';
+            addToCartButton.disabled = true;
         }
 
         // Update the max attribute of the quantity input

@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.core.files.storage import default_storage
 from django.http import JsonResponse
 from users.models import Address
-from products.models import Product, ProductVariant, ProductCustomization, Coupon, CouponUsage, ProductImage, Category
+from products.models import Product, ProductVariant, ProductCustomization, Coupon, CouponUsage, ProductImage, Category,Offer,ContentType
 from .models import Cart, CartItem, Order, OrderItem,Wishlist,WishlistItem
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -148,23 +148,20 @@ def add_to_cart(request):
     if request.method == "POST":
         print(request.POST)  # Debugging: Print all POST data
 
-        # Retrieve product_id and category-specific variant
+        # Retrieve product_id and category
         product_id = request.POST.get('product_id')
-
-        # Fetch the product
         product = get_object_or_404(Product, id=product_id)
-        category_name = product.category.name.lower()  # Get category name from the product
+        category_name = product.category.name.lower()  
 
-        # Initialize variant and variant filters
         variant = None
-        variant_filters = {'product': product}
+        variant_filters = {'product': product}  
 
-        # Handle variants based on category
+        # Handle category-specific variant filters
         if category_name == 'wallet':
             color = request.POST.get('color')
             charm = request.POST.get('charm')
             charm_img = request.FILES.get('charmImg')
-            customization_text = request.POST.get('wallet-name', '').strip()  # Retrieve customization text for wallet
+            customization_text = request.POST.get('wallet-name', '').strip()
 
             if color:
                 variant_filters['color'] = color
@@ -172,49 +169,79 @@ def add_to_cart(request):
                 variant_filters['charm'] = charm
             if charm_img:
                 variant_filters['charm_img'] = charm_img
+
         elif category_name == '3d_crystal':
             size = request.POST.get('size')
-            view_flex = request.POST.get('view-type')
+            viewflex = request.POST.get('view-type')  # Ensure correct field name
 
             if size:
                 variant_filters['size'] = size
-            if view_flex:
-                variant_filters['viewflex'] = view_flex
+            if viewflex:
+                variant_filters['viewflex'] = viewflex  
+
         elif category_name == 'water_bottle':
             liter = request.POST.get('liter')
-            customization_text = request.POST.get('wallet-name', '').strip()  # Retrieve customization text for wallet
+            customization_text = request.POST.get('wallet-name', '').strip()
 
             if liter:
                 variant_filters['liter'] = liter
 
-        # Retrieve the variant if filters are applied
-        if variant_filters:
-            variant = ProductVariant.objects.filter(**variant_filters).first()
-            if not variant:
-                return JsonResponse({'error': 'Selected variant is not available.'}, status=404)
+        print("Variant Filters:", variant_filters)  # Debugging
 
-        # Validate and process the quantity
+        # Fetch variant (without strict validation)
+        variant = ProductVariant.objects.filter(**variant_filters).first()
+        print("Variant Query:", ProductVariant.objects.filter(**variant_filters, is_valid_combination=True).query)  # Debugging
+        print("Variant Found:", variant)  # Debugging
+
+
+
+        if not variant:
+            return JsonResponse({'error': 'Selected variant is not available.'}, status=404)
+
+
+
+        # Validate quantity
         quantity = request.POST.get('quantity', '').strip()
         if not quantity.isdigit() or int(quantity) <= 0:
             return JsonResponse({'error': 'Invalid quantity provided.'}, status=400)
+
         quantity = int(quantity)
 
-        # Check if the requested quantity exceeds the available stock
+        # Check stock availability
         if quantity > variant.quantity:
             return JsonResponse({'error': 'Requested quantity exceeds available stock.'}, status=400)
 
         # Handle uploaded image (if any)
         uploaded_image = request.FILES.get('image')
 
-        # Check user authentication and manage the cart
+        # User authentication check
         if request.user.is_authenticated:
             cart, created = Cart.objects.get_or_create(customer=request.user)
             cart_item = CartItem.objects.filter(cart=cart, product=product, variant=variant).first()
 
+            # Fetch active offers
+            product_content_type = ContentType.objects.get_for_model(Product)
+            product_offer = Offer.objects.filter(content_type=product_content_type, object_id=product.id, status='active').first()
+
+            category_offer = None
+            if not product_offer:
+                category_content_type = ContentType.objects.get_for_model(product.category)
+                category_offer = Offer.objects.filter(content_type=category_content_type, object_id=product.category.id, status='active').first()
+
+            # Apply discount if any
+            final_offer = product_offer or category_offer
+            discounted_price = product.price
+            if final_offer:
+                discounted_price = product.price * (1 - final_offer.offer_percentage / 100)
+
+            # Add to cart logic
             if cart_item:
                 if cart_item.quantity + quantity > variant.quantity:
                     return JsonResponse({'error': 'Requested quantity exceeds available stock.'}, status=400)
+
+
                 cart_item.quantity += quantity
+                cart_item.price = discounted_price  
                 cart_item.save()
             else:
                 cart_item = CartItem.objects.create(
@@ -222,37 +249,33 @@ def add_to_cart(request):
                     product=product,
                     variant=variant,
                     quantity=quantity,
-                    price=product.price
+                    price=discounted_price
                 )
 
-            # Handle image and text customization (if applicable)
+            # Handle customization
             customization_data = {}
             if uploaded_image:
                 image_path = default_storage.save(f"customizations/{uploaded_image.name}", uploaded_image)
                 customization_data['customization_image'] = image_path
-            if category_name == 'wallet' or category_name == 'water_bottle' and customization_text:
+            if (category_name == 'wallet' or category_name == 'water_bottle') and customization_text:
                 customization_data['customization_text'] = customization_text
 
-            # In add_to_cart view, after creating ProductCustomization:
+            # Save customization if available
             if customization_data:
                 customization = ProductCustomization.objects.create(
                     product=product,
                     customer=request.user,
                     **customization_data
                 )
-                # Link to cart item
                 cart_item.customization = customization
                 cart_item.save()
 
-            return redirect('cart')  # Redirect to the cart page after successful addition
+            return redirect('cart')  # Redirect to cart page after success
 
         else:
-            # Redirect to login page if user is not authenticated
-            return redirect('login_user')
+            return redirect('login_user')  # Redirect to login if user not authenticated
 
-    # Handle invalid request methods
     return JsonResponse({'error': 'Invalid request method. Only POST requests are allowed.'}, status=400)
-
 
 def update_cart_quantity(request):
     if request.method == "POST":
@@ -465,16 +488,22 @@ def place_order(request):
                 payment_status = 'Pending'
 
                 # Create the order
-                order = Order.objects.create(
-                    customer=request.user,
-                    status=Order.PENDING,
-                    total_price=total,
-                    shipping_address=address.full_address(),
-                    billing_address=address.full_address(),
-                    payment_method=payment_method,
-                    shipping_cost=shipping_cost,
-                    payment_status=payment_status
-                )
+                for item in cart_items:
+                    order = Order.objects.create(
+                        customer=request.user,
+                        status=Order.PENDING,
+                        total_price=total,
+                        shipping_address=address,
+                        billing_address=address,
+                        payment_method=payment_method,
+                        shipping_cost=shipping_cost,
+                        payment_status=payment_status
+                    )
+
+                    # Update the variant quantity
+                    variant = item.variant
+                    variant.quantity -= item.quantity
+                    variant.save()
 
                 # Create order items
                 for item in cart_items:

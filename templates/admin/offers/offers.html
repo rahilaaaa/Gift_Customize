@@ -82,10 +82,14 @@
                                                     {% if offer.status == 'active' %}
                                                         <button type="submit" class="btn btn-danger btn-sm">Remove Offer</button>
                                                     {% else %}
-                                                        <button type="submit" class="btn btn-primary btn-sm">Apply Offer</button>
+                                                        <button type="submit" class="btn btn-primary btn-sm">Apply </button>
                                                     {% endif %}
                                                 </form>
                                             </td>
+                                            {% comment %} <form action="{% url 'delete_offer' offer.id %}" method="POST" style="display: inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                            </form> {% endcomment %}
                                         </tr>
                                         {% endfor %}
                                         

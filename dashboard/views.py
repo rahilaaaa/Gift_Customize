@@ -11,8 +11,11 @@ from django.http import JsonResponse
 from django.core.files.images import get_image_dimensions
 from PIL import Image
 from io import BytesIO
+from django.db.models import Q
+from orders.models import Order, OrderItem
 from django.db import transaction
 from .forms import CouponForm
+from django.contrib.admin.views.decorators import staff_member_required
 from decimal import Decimal, InvalidOperation
 from django.contrib.contenttypes.models import ContentType
 
@@ -387,14 +390,52 @@ def add_products(request):
     return render(request, 'admin/product/add_products.html')
 
 
-
 def orders_list(request):
+    # Get search query and filter parameters from the request
+    search_query = request.GET.get('search', '')
+    status_filter = request.GET.get('status', '')
+    order_id_search = request.GET.get('order_id', '')
 
-    return render(request, 'admin/orders/orders_list.html')
+    # Fetch orders based on search query and filters
+    orders = Order.objects.all()
+
+    if search_query:
+        orders = orders.filter(
+            Q(customer__username__icontains=search_query) |
+            Q(customer__email__icontains=search_query)
+        )
+
+    if status_filter:
+        orders = orders.filter(status=status_filter)
+
+    if order_id_search:
+        orders = orders.filter(id__icontains=order_id_search)
+
+    return render(request, 'admin/orders/orders_list.html', {
+        'orders': orders,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'order_id_search': order_id_search,
+    })
 
 
-def order_details(request):
-    return render(request, 'admin/orders/order-details.html')
+# @staff_member_required
+def order_details(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        if new_status:
+            order.status = new_status
+            order.save()
+            messages.success(request, "Order status updated successfully.")
+            return redirect('orders_list')  # Redirect to orders_list page
+    # Fetch the order items
+    order_items = OrderItem.objects.filter(order=order)
+
+    return render(request, 'admin/orders/order-details.html', {
+        'order': order,
+        'order_items': order_items,
+    })
 
 @never_cache
 def coupon(request):
@@ -410,6 +451,17 @@ def create_coupon(request):
         form = CouponForm(request.POST)
         if form.is_valid():
             coupon = form.save(commit=False)
+            coupon.code = coupon.code.lower()  # Convert code to lowercase
+
+             # Check if the coupon code already exists
+            if Coupon.objects.filter(code=coupon.code).exists():
+                messages.error(request, 'Coupon code already exists. Please use a different code.')
+                return render(request, 'admin/coupon/create_coupon.html', {
+                    'form': form,
+                    'products': products,
+                    'categories': categories,
+                })
+            
             coupon.save()  # Save first to get ID
 
             # Add M2M relationships
@@ -417,7 +469,7 @@ def create_coupon(request):
             coupon.categories.set(request.POST.getlist('categories'))
 
             messages.success(request, 'Coupon created successfully!')
-            return redirect('create_coupon')
+            return redirect('coupon')
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
@@ -538,6 +590,12 @@ def edit_offers(request, offer_id):
         'offer': offer,
         'related_object': related_object
     })
+
+def delete_offer(request, offer_id):
+    offer = get_object_or_404(Offer, id=offer_id)
+    offer.delete()
+    messages.success(request, 'Offer deleted successfully!')
+    return redirect('offers')
 
 def create_category_offers(request):
     if request.method == 'POST':
@@ -726,7 +784,7 @@ def categories(request):
 
 def add_category(request):
     if request.method == 'POST':
-        name = request.POST.get('name', '').strip()
+        name = request.POST.get('name', '').strip().lower()
         description = request.POST.get('description', '').strip()
 
         if not name:

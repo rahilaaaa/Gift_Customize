@@ -35,7 +35,7 @@
                 <form action="{% url 'add_to_cart' %}" method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
                     {% for variant in product_variants %}
-                    <span class="variant-color" data-color="{{ variant.color }}" data-quantity="{{ variant.quantity }}" onclick="selectVariant(this);" style="font-size: 14px; margin: 0 10px; cursor: pointer;">
+                    <span class="variant-color" data-color="{{ variant.color }}" data-quantity="{{ variant.quantity }}" onclick="selectVariant(this);" style="font-size: 14px; margin:0 10px; cursor: pointer;">
                         {{ variant.color }}
                     </span>
                     {% endfor %}
@@ -53,9 +53,25 @@
                     <small class="fas fa-star-half-alt"></small>
                     <small class="far fa-star"></small>
                 </div>
-                <small class="pt-1">({{reviews|length }})</small>
+                <small class="pt-1">({{ reviews|length }})</small>
             </div>
-            <h3>${{ product.price }}</h3>
+            <!-- Special Offer Section -->
+            {% if final_offer %}
+            <div style="margin-bottom: 20px;">
+                <h5 style="color: #28a745; font-weight: bold; display: inline;">{{ final_offer.offer_name }}</h5>
+                <p style="color: #155724; display: inline;"> {{ final_offer.offer_description }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Price Section -->
+            <h3>
+                {% if discounted_price %}
+                <span style="text-decoration: line-through; color: #999; font-size: 0.7em;">${{ product.price }}</span>
+                <span style="color: #D19C97;">${{ discounted_price|floatformat:2 }}</span>
+                {% else %}
+                <span style="color: #D19C97;">${{ product.price }}</span>
+                {% endif %}
+            </h3>
             <p>{{ product.description }}</p>
 
             <!-- Wallet Charm Section -->
@@ -97,32 +113,24 @@
             </div>
 
             <!-- Quantity and Add to Cart Section -->
-            <div class="d-flex align-items-center mb-4 pt-2">
+            <div class="d-flex align-items-center mb-4 pt-2" id="quantitySection">
                 <div class="input-group quantity mr-3" style="width: 130px;">
-                    <div class="input-group-btn">
-                        {% comment %} <button type="button" class="btn btn-primary btn-minus" onclick="decreaseQuantity()">
-                            <i class="fa fa-minus"></i>
-                        </button> {% endcomment %}
-                    </div>
+                   
                     <input type="number" 
                         class="form-control bg-secondary text-center" 
                         id="quantity" 
                         name="quantity" 
                         value="1" 
                         min="1">
-                    <div class="input-group-btn">
-                        {% comment %} <button type="button" class="btn btn-primary btn-plus" onclick="increaseQuantity()">
-                            <i class="fa fa-plus"></i>
-                        </button> {% endcomment %}
-                    </div>
-                </div>
+                  
+                </div> 
 
                 <input type="hidden" name="product_id" value="{{ product.id }}">
                 <input type="hidden" name="color" id="selectedColor" value="{{ product_variants.0.color }}">
                 <input type="hidden" name="charm" id="selectedCharm" value="{{ product_variants.0.charm }}">
                 <input type="hidden" name="charmImg" id="selectedCharmImg" value="{{ product_variants.0.charmImg.url }}">
                 <input type="hidden" name="category" value="{{ product.category.name }}">
-                <button type="submit" class="btn btn-primary mt-1">Add To Cart</button>
+                <button type="submit" class="btn btn-primary mt-1" id="addToCartButton">Add To Cart</button>
             </div>
     </form>
 
@@ -163,53 +171,38 @@
     function updateAvailability(inputElement) {
         const quantity = inputElement.getAttribute('data-quantity'); // Get the quantity from the clicked variant
         const availabilityMessage = document.getElementById('availabilityMessage');
+        const quantitySection = document.getElementById('quantitySection');
+        const addToCartButton = document.getElementById('addToCartButton');
 
         // Update the availability message
         if (quantity > 0) {
             availabilityMessage.textContent = `Only ${quantity} items left in stock`; // Use backticks for template literals
-            availabilityMessage.style.color = 'red';
+            availabilityMessage.style.color = '#D19C97';
+            quantitySection.style.display = 'flex'; // Show quantity section
+            addToCartButton.disabled = false; // Enable add to cart button
         } else {
             availabilityMessage.textContent = 'Out of stock';
-            availabilityMessage.style.color = 'grey';
+            availabilityMessage.style.color = 'red';
+            quantitySection.style.display = 'none'; // Hide quantity section
+            addToCartButton.disabled = true; // Disable add to cart button
         }
 
         // Update the max attribute of the quantity input
         document.getElementById('quantity').max = quantity;
-    }
+    } 
 
-    // Increase quantity in the input box
-    function increaseQuantity() {
-        const quantityInput = document.getElementById("quantity");
-        const maxQuantity = parseInt(quantityInput.max);
-        let currentQuantity = parseInt(quantityInput.value);
 
-        if (currentQuantity < maxQuantity) {
-            quantityInput.value = currentQuantity + 1;
-        } else {
-            alert("Requested quantity exceeds available stock.");
-        }
-    }
-
-    // Decrease quantity in the input box
-    function decreaseQuantity() {
-        const quantityInput = document.getElementById("quantity");
-        let currentQuantity = parseInt(quantityInput.value);
-
-        if (currentQuantity > 1) {
-            quantityInput.value = currentQuantity - 1;
-        }
-    }
 
     // Function to handle variant selection
     function selectVariant(element) {
         // Deselect all variants
         document.querySelectorAll('.variant-color').forEach(function(item) {
-            item.style.border = "1px solid transparent";
+            item.style.border = "1px solid transparent"; 
             item.style.backgroundColor = "transparent";
         });
 
         // Highlight the selected variant
-        element.style.border = "2px solid #007bff";
+     
 
         // Perform actions with the selected variant
         const color = element.getAttribute('data-color');

@@ -1,7 +1,8 @@
 from django.db import models
-from users.models import Customer
+from users.models import Customer, Address
 from products.models import Product, ProductVariant, ProductCustomization,Coupon
 from django.contrib.auth.models import User
+
 
 class Cart(models.Model):
     customer = models.OneToOneField(Customer, on_delete=models.CASCADE, related_name="cart", verbose_name="Customer")
@@ -44,8 +45,8 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")
     total_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Total Price")
-    shipping_address = models.TextField(verbose_name="Shipping Address")
-    billing_address = models.TextField(verbose_name="Billing Address")
+    shipping_address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True, related_name="shipping_orders", verbose_name="Shipping Address")
+    billing_address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, blank=True, related_name="billing_orders", verbose_name="Billing Address")
     payment_method = models.CharField(max_length=50, verbose_name="Payment Method")
     payment_status = models.CharField(max_length=50, verbose_name="Payment Status")
     shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Shipping Cost")  # Add shipping_cost field

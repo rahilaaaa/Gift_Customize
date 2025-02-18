@@ -29,6 +29,7 @@
                                     <th class="p-2">Product</th>
                                     <th class="p-2">Price</th>
                                     <th class="p-2">Qty</th>
+                                    <th class="p-2">Varient</th>
                                     <th class="p-2">Customization</th>
                                     <th class="p-2">Total</th>
                                     <th class="p-2">Date</th>
@@ -38,6 +39,16 @@
                                     <th class="p-2">Delivery</th>
                                     <th class="p-2">Payment</th>
                                     <th class="p-2">Address</th>
+                                   
+                                    {% comment %} {% for item in order.items.all %}
+                                        {% if item.product.category.name == 'wallet' %}
+                                            <th class="p-2">Color</th>
+                                        {% elif item.product.category.name == '3d_crystal' %}
+                                            <th class="p-2">Size</th>
+                                        {% elif item.product.category.name == 'bottle' %}
+                                            <th class="p-2">Liter</th>
+                                        {% endif %}
+                                    {% endfor %} {% endcomment %}
                                 </tr>
                             </thead>
                             <tbody>
@@ -58,6 +69,13 @@
                                         </td>
                                         <td class="p-2 small">₹{{ item.price }}</td>
                                         <td class="p-2 small">{{ item.quantity }}</td>
+                                        {% if item.product.category.name == 'wallet' %}
+                                        <td class="p-2 small">{{ item.variant.color }}</td>
+                                        {% elif item.product.category.name == '3d_crystal' %}
+                                            <td class="p-2 small">{{ item.variant.size }}</td>
+                                        {% elif item.product.category.name == 'water_bottle' %}
+                                            <td class="p-2 small">{{ item.variant.liter }}</td>
+                                        {% endif %}
                                         <td class="p-2 small">
                                             {% if item.customization %}
                                                 <div class="customization-content">
@@ -75,7 +93,7 @@
                                         <td class="p-2 small">₹{{ item.get_total_price }}</td>
                                         <td class="p-2 small">{{ order.created_at|date:"M d, Y" }}</td>
                                         <td class="p-2 small">
-                                            <span class="{% if order.status == 'Cancelled' %}text-danger{% elif order.status == 'Pending' %}text-warning{% else %}text-success{% endif %}">
+                                            <span class="{% if order.status == 'cancelled' %}text-danger{% elif order.status == 'pending' %}text-warning{% else %}text-success{% endif %}">
                                                 {{ order.get_status_display }}
                                             </span>
                                         </td>
@@ -86,6 +104,7 @@
                                         <td class="p-2 small text-wrap" style="max-width: 180px;">
                                             <small>{{ order.shipping_address }}</small>
                                         </td>
+                                      
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -97,8 +116,6 @@
         </div>
     </div>
 </div>
-
-
 
 {% include "products/script.html" %}
 

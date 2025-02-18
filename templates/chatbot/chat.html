@@ -1,0 +1,154 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+{% block head %}
+    {% include "products/head.html" %}
+{% endblock head %}
+
+
+<body>
+
+{% block topbar %}
+
+{% include "users/header_not_search.html" %}
+    
+{% endblock topbar %}
+
+{% block navbar %}
+        {% include "products/navbar.html" %}
+{% endblock navbar %}
+
+<div class="container-fluid pt-5">
+    {% comment %} <div class="text-center mb-4">
+        <h2 class="section-title px-5"><span class="px-2">Want to chat now?</span></h2>
+    </div> {% endcomment %}
+    <div class="row justify-content-center px-xl-5">
+        <div id="chatbot-container">
+            <div id="chatbot-header">
+                <span>Want to chat now?</span>
+            </div>
+            <div id="chatbot-body">
+                <div id="chatbot-messages"></div>
+                <input type="text" id="chatbot-input" placeholder="Type a message...">
+                <button id="chatbot-send">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Styles -->
+<style>
+    #chatbot-container {
+        width: 100%;
+        max-width: 800px; /* Increased width */
+        height: 600px; /* Increased height */
+        background: white;
+        border: 1px solid #ddd;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        margin-top: 20px;
+    }
+    #chatbot-header {
+        background: #D19C97;
+        color: white;
+        padding: 20px; /* Increased padding */
+        text-align: center;
+        font-size: 20px; /* Larger font */
+        font-weight: bold;
+        border-radius: 10px 10px 0 0;
+    }
+    #chatbot-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 20px; /* Increased padding */
+    }
+    #chatbot-messages {
+        flex: 1;
+        overflow-y: auto;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 15px;
+        font-size: 16px; /* Larger text */
+    }
+    #chatbot-input {
+        width: 100%;
+        padding: 12px; /* Larger padding */
+        font-size: 16px; /* Larger font */
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-top: 15px;
+    }
+    #chatbot-send {
+        width: 100%;
+        margin-top: 10px;
+        padding: 12px; /* Increased size */
+        font-size: 16px; /* Larger text */
+        background: #D19C97;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+</style>
+
+<script>
+    document.getElementById('chatbot-send').addEventListener('click', function() {
+        let inputField = document.getElementById('chatbot-input');
+        let message = inputField.value.trim();
+
+        if (message) {
+            let chatMessages = document.getElementById('chatbot-messages');
+            
+            // Append user message
+            let userMessage = document.createElement('div');
+            userMessage.textContent = "You: " + message;
+            chatMessages.appendChild(userMessage);
+            
+            // Send message to backend
+            fetch('/chat/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                let botMessage = document.createElement('div');
+                botMessage.textContent = "Bot: " + data.response;
+                chatMessages.appendChild(botMessage);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
+
+            inputField.value = '';
+        }
+    });
+
+    // CSRF Token Helper Function
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            let cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                let cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+
+
+
+{% block footer %}
+    {% include "products/footer.html" %}
+{% endblock footer %}
