@@ -33,6 +33,8 @@ load_dotenv()
 # Use the SECRET_KEY from .env
 SECRET_KEY = os.getenv('SECRET_KEY')
 
+
+
 # SECURITY WARNING: keep the secret key used in production secret!
 
 
@@ -300,4 +302,6 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 # Set Google Application Credentials
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = env("GOOGLE_APPLICATION_CREDENTIALS")
+
+
 
