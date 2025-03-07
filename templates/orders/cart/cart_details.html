@@ -30,7 +30,7 @@
                                 {% if cart_items %}
                                     {% for item in cart_items %}
                                         {% if forloop.first %}
-                                            {% if item.product.category.name == '3d_crystal' %}
+                                            {% if item.product.category.name == '3d crystal' %}
                                                 <tr>
                                                     <th>Product</th>
                                                     <th>Price</th>                                                    
@@ -48,7 +48,7 @@
                                                     <th>Quantity</th>
                                                     <th>Customized Content</th>
                                                 </tr>
-                                            {% elif item.product.category.name == 'water_bottle' %}
+                                            {% elif item.product.category.name == 'water bottle' %}
                                                 <tr>
                                                     <th>Product</th>
                                                     <th>Price</th>
@@ -74,11 +74,11 @@
                                         
                                         <!-- Category-specific Fields -->
                                         <td>
-                                            {% if item.product.category.name == '3d_crystal' %}
+                                            {% if item.product.category.name == '3d crystal' %}
                                                 {{ item.variant.size }}
                                             {% elif item.product.category.name == 'wallet' %}
                                                 {{ item.variant.color }}
-                                            {% elif item.product.category.name == 'water_bottle' %}
+                                            {% elif item.product.category.name == 'water bottle' %}
                                                 {{ item.variant.liter }}
                                             {% else %}
                                                 No Variant
@@ -108,7 +108,7 @@
                                                 No Customization
                                             {% endif %}
                                         </td>
-                                        {% if item.product.category.name == '3d_crystal'  %}
+                                        {% if item.product.category.name == '3d crystal'  %}
                                             <td>
                                                 {{ item.variant.viewflex }}
                                             </td>

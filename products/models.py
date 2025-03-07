@@ -107,8 +107,9 @@ class ProductVariant(models.Model):
         super().clean()
         
         if self.product.category:
-            category_name = self.product.category.name.lower()
+            category_name = self.product.category.name.upper()
             
+
             if category_name == "wallet":
                 if self.size or self.liter:
                     raise ValidationError("For 'wallet' category, only 'color' and 'quantity' fields are allowed.")

@@ -16,8 +16,48 @@ from django.db import transaction
 from django.contrib.auth.decorators import login_required, user_passes_test
 from datetime import datetime
 from django.db.models import Min
+from paypalrestsdk import Payment
+from django.conf import settings
+from django.http import HttpResponse
+from django.http import JsonResponse
+import razorpay
+from django.urls import reverse
+import logging
+from razorpay.errors import SignatureVerificationError
 
-# # Function to check if a user is a superuser
+
+
+
+razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+@csrf_exempt
+def create_razorpay_order(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            amount = int(Decimal(data.get("amount", 0)) * 100)  # Convert INR to paise
+
+               # DEBUG: Print the Razorpay Key ID
+            print(f"RAZORPAY_KEY_ID: {settings.RAZORPAY_KEY_ID}")
+            print(f"RAZORPAY_KEY_ID: {settings.RAZORPAY_KEY_ID}")
+            print(f"RAZORPAY_KEY_SECRET: {settings.RAZORPAY_KEY_SECRET}")
+            print(f"Amount in paise: {amount}")
+         
+
+            razorpay_order = razorpay_client.order.create({
+                "amount": amount,
+                "currency": "INR",
+                "payment_capture": 1  # Auto capture payment
+            })
+            print(f"Razorpay Order Response: {razorpay_order}")
+
+            return JsonResponse({
+                "order_id": razorpay_order["id"],
+                "key": settings.RAZORPAY_KEY_ID,
+                "amount": amount
+            })
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)   
 # def is_superuser(user):
 #     return user.is_superuser
 
@@ -170,7 +210,7 @@ def add_to_cart(request):
             if charm_img:
                 variant_filters['charm_img'] = charm_img
 
-        elif category_name == '3d_crystal':
+        elif category_name == '3d crystal':
             size = request.POST.get('size')
             viewflex = request.POST.get('view-type')  # Ensure correct field name
 
@@ -179,7 +219,7 @@ def add_to_cart(request):
             if viewflex:
                 variant_filters['viewflex'] = viewflex  
 
-        elif category_name == 'water_bottle':
+        elif category_name == 'water bottle':
             liter = request.POST.get('liter')
             customization_text = request.POST.get('wallet-name', '').strip()
 
@@ -257,7 +297,7 @@ def add_to_cart(request):
             if uploaded_image:
                 image_path = default_storage.save(f"customizations/{uploaded_image.name}", uploaded_image)
                 customization_data['customization_image'] = image_path
-            if (category_name == 'wallet' or category_name == 'water_bottle') and customization_text:
+            if (category_name == 'wallet' or category_name == 'water bottle') and customization_text:
                 customization_data['customization_text'] = customization_text
 
             # Save customization if available
@@ -375,75 +415,107 @@ def cart_details(request, item_id):
         'cart_items': cart_items,
     })
 
-
 def apply_coupon(request):
-    code = request.POST.get('coupon_code')
+    if request.method == "POST":
+        code = request.POST.get('coupon_code', '').strip()
 
-    try:
-        # Fetch the user's cart
-        cart = request.user.cart  # This uses the related_name "cart" from the Cart model
-        cart_items = cart.items.all()
-        
-        # Calculate subtotal
-        subtotal = sum(item.get_total_price() for item in cart_items)
+        try:
+            coupon = Coupon.objects.get(
+                code=code, active=True,
+                valid_from__lte=datetime.now(), valid_to__gte=datetime.now()
+            )
 
-        # Fetch the coupon
-        coupon = Coupon.objects.get(code=code, active=True)
+            # Check if the user has already used this coupon
+            if CouponUsage.objects.filter(user=request.user, coupon=coupon).exists():
+                messages.error(request, "You have already used this coupon.")
+                return redirect('checkout')
 
-        # Check if the user has already used this coupon
-        if CouponUsage.objects.filter(user=request.user, coupon=coupon).exists():
-            messages.error(request, "You have already used this coupon.")
-            return redirect('cart')
+            # Get user's cart and subtotal
+            try:
+                cart = Cart.objects.get(customer=request.user)
+                subtotal = sum(item.get_total_price() for item in cart.items.all())
+            except Cart.DoesNotExist:
+                messages.error(request, "Your cart is empty.")
+                return redirect('checkout')
 
-        # Apply the discount
-        discount_amount = coupon.apply_discount(subtotal)
-        discounted_total = max(Decimal('0.00'), subtotal - discount_amount)
+            # Check if the subtotal meets the minimum purchase amount
+            if subtotal < coupon.minimum_purchase:
+                messages.error(request, f"This coupon requires a minimum purchase of ₹{coupon.minimum_purchase}.")
+                return redirect('checkout')
 
-        # Increment coupon usage
-        coupon.total_uses += 1
-        coupon.save()
+            # Apply discount
+            if coupon.discount_type == 'percentage':
+                discount_amount = (Decimal(coupon.discount_value) / Decimal(100)) * subtotal
+            else:  # Fixed discount
+                discount_amount = Decimal(coupon.discount_value)
 
-        # Store the discount in session as a float
-        request.session['coupon_discount'] = float(discount_amount)
-        request.session['coupon_id'] = coupon.id  # Save coupon ID in session
+            # Ensure discount doesn't exceed subtotal
+            discount_amount = min(discount_amount, subtotal)
 
-        # Set the coupon for each cart item
-        for item in cart_items:
-            item.coupon = coupon
-            item.save()
+            # Store discount in session
+            request.session['coupon_discount'] = float(discount_amount)
+            request.session['coupon_id'] = coupon.id  # Store the coupon ID
 
+            # ✅ Assign coupon to all cart items
+            for item in cart.items.all():
+                item.coupon = coupon
+                item.save()
 
-        # Record the coupon usage
-        CouponUsage.objects.create(user=request.user, coupon=coupon)
+            # Increment coupon usage
+            coupon.total_uses += 1
+            coupon.save()
 
-        messages.success(request, f"Coupon applied! You saved ${discount_amount:.2f}.")
-        return redirect('cart')
+            # Record coupon usage
+            CouponUsage.objects.create(user=request.user, coupon=coupon)
 
-    except Coupon.DoesNotExist:
-        messages.error(request, "Invalid coupon code.")
-        return redirect('cart')
+            messages.success(request, f"Coupon applied! You saved ₹{discount_amount:.2f}.")
+            return redirect('checkout')
 
-    except Cart.DoesNotExist:
-        messages.error(request, "No cart found.")
-        return redirect('cart')
+        except Coupon.DoesNotExist:
+            messages.error(request, "Invalid or expired coupon code.")
+            return redirect('checkout')
 
 
 def checkout(request):
-    try:
-        cart = Cart.objects.get(customer=request.user)
-        cart_items = cart.items.all()  # Get related CartItems
-        total_amount = sum(item.get_total_price() for item in cart_items)
-    except Cart.DoesNotExist:
-        cart_items = []
-        total_amount = 0
+    order_id = request.GET.get('order_id')
+    order = None
 
-    # Ensure subtotal and shipping_cost are Decimal
-    subtotal = sum(Decimal(item.quantity) * item.price for item in cart_items)
-    shipping_cost = Decimal('10.00')
+    if order_id:
+        try:
+            # Fetch the failed order
+            order = Order.objects.get(id=order_id, customer=request.user, status=Order.PAYMENT_FAILED)
+        except Order.DoesNotExist:
+            messages.error(request, "Invalid order ID or order is not eligible for retry payment.")
+            return redirect("orders")
 
-    # Convert discount_amount from float to Decimal
-    discount_amount = Decimal(request.session.get('coupon_discount', 0))
-    total = max(Decimal('0.00'), subtotal - discount_amount + shipping_cost)
+    # Calculate subtotal and total
+    if order:
+        # For retry payment, use the order's total_price and shipping_cost
+        subtotal = order.total_price - order.shipping_cost
+        total = order.total_price
+    else:
+        # For new orders, calculate subtotal and total from the cart
+        try:
+            cart = Cart.objects.get(customer=request.user)
+            cart_items = cart.items.all()
+            subtotal = sum(item.get_total_price() for item in cart_items)
+        except Cart.DoesNotExist:
+            cart_items = []
+            subtotal = Decimal('0.00')
+
+        shipping_cost = Decimal('10.00')
+        discount_amount = Decimal(request.session.get('coupon_discount', 0))
+        total = max(Decimal('0.00'), subtotal - discount_amount + shipping_cost)
+
+    # Fetch the minimum purchase amount from the database
+    minimum_purchase_amount = Coupon.objects.filter(active=True).aggregate(Min('minimum_purchase'))['minimum_purchase__min'] or Decimal('0.00')
+
+    # Check if the subtotal meets the minimum purchase amount
+    meets_minimum_purchase = subtotal >= minimum_purchase_amount
+
+    active_coupons = []
+    if meets_minimum_purchase:
+        active_coupons = Coupon.objects.filter(active=True, valid_from__lte=datetime.now(), valid_to__gte=datetime.now())
 
     # Fetch user addresses dynamically
     user_addresses = Address.objects.filter(user=request.user)
@@ -454,41 +526,59 @@ def checkout(request):
         cart_count = 0
 
     return render(request, 'orders/checkout/checkout.html', {
-        'cart_items': cart_items,
-        'total_amount': total_amount,
+        'cart_items': cart_items if not order else [],  # No cart items for retry payment
         'total': total,
         'subtotal': subtotal,
-        'shipping_cost': shipping_cost,
-        'discount_amount': discount_amount,
+        'shipping_cost': order.shipping_cost if order else Decimal('10.00'),  # Use order's shipping_cost for retry payment
+        'discount_amount': Decimal('0.00') if order else Decimal(request.session.get('coupon_discount', 0)),  # No discount for retry payment
         'user_addresses': user_addresses,  # Pass addresses to template
         'cart_count': cart_count,  # Add cart count to context
-
+        'active_coupons': active_coupons,  # Add active coupons to context
+        'meets_minimum_purchase': meets_minimum_purchase,  # Add minimum purchase status to context
+        'order': order,  # Pass the failed order to the template
+        "paypal_client_id": settings.PAYPAL_CLIENT_ID
     })
-
 
 @login_required
 def place_order(request):
     if request.method == "POST":
         try:
             with transaction.atomic():
-                # Fetch the user's cart
+                # Fetch order details
+                selected_address_id = request.POST.get("address")
+                payment_method = request.POST.get("payment_method")
+                payment_failed = request.POST.get("payment_failed") == 'true'
+                order_id = request.POST.get("order_id")  # Fetch order_id for retry payment
+
+                # Fetch user's cart
                 cart = Cart.objects.get(customer=request.user)
                 cart_items = cart.items.all()
 
-                # Calculate subtotal
+                # Calculate total amount
                 subtotal = sum(item.get_total_price() for item in cart_items)
-                shipping_cost = Decimal('10.00')
-                discount_amount = Decimal(request.session.get('coupon_discount', 0))
-                total = max(Decimal('0.00'), subtotal - discount_amount + shipping_cost)
+                shipping_cost = Decimal("10.00")
+                discount_amount = Decimal(request.session.get("coupon_discount", 0))
+                total = max(Decimal("0.00"), subtotal - discount_amount + shipping_cost)
 
-                # Fetch addresses
-                address_id = request.POST.get('address')
-                address = get_object_or_404(Address, id=address_id, user=request.user)
-                payment_method = request.POST.get('payment_method')
-                payment_status = 'Pending'
+                address = get_object_or_404(Address, id=selected_address_id, user=request.user)
 
-                # Create the order
-                for item in cart_items:
+                # Handle wallet payment
+                if payment_method == 'wallet':
+                    wallet = request.user.wallet
+                    if wallet.balance < total:
+                        messages.error(request, "Insufficient wallet balance. Please choose another payment method.")
+                        return redirect("checkout")
+                    else:
+                        wallet.deduct_funds(total)
+
+                # Handle retry payment
+                if order_id:
+                    order = Order.objects.get(id=order_id, customer=request.user, status=Order.PAYMENT_FAILED)
+                    order.status = Order.PENDING
+                    order.payment_status = "Pending"
+                    order.save()
+                else:
+                    # Create a new order
                     order = Order.objects.create(
                         customer=request.user,
                         status=Order.PENDING,
@@ -497,13 +587,8 @@ def place_order(request):
                         billing_address=address,
                         payment_method=payment_method,
                         shipping_cost=shipping_cost,
-                        payment_status=payment_status
+                        payment_status="Pending"
                     )
-
-                    # Update the variant quantity
-                    variant = item.variant
-                    variant.quantity -= item.quantity
-                    variant.save()
 
                 # Create order items
                 for item in cart_items:
@@ -514,37 +599,75 @@ def place_order(request):
                         quantity=item.quantity,
                         price=item.price,
                         customization=item.customization,
-                        coupon=item.coupon  # Add coupon to OrderItem
-
+                        coupon=item.coupon
                     )
 
-                # Clear the cart
+                    # Update the variant quantity
+                    item.variant.quantity -= item.quantity
+                    item.variant.save()
+
+                # Clear the cart after successful order creation
                 cart.items.all().delete()
 
                 # Clear the coupon discount from session
-                if 'coupon_discount' in request.session:
-                    del request.session['coupon_discount']
+                if "coupon_discount" in request.session:
+                    del request.session["coupon_discount"]
 
-                messages.success(request, "Order placed successfully!")
-                return redirect('order_confirmation', order_id=order.id)
+                # Handle payment success or failure
+                if payment_failed:
+                    order.status = Order.PAYMENT_FAILED
+                    order.payment_status = "Failed"
+                    order.save()
+                    # messages.error(request, "Payment failed. Please try again.")
+                    return redirect("payment_failed", order_id=order.id)
+                else:
+                    order.status = Order.PENDING
+                    order.payment_status = "Paid"
+                    order.save()
+                    messages.success(request, "Order placed successfully!")
+                    return redirect("order_confirmation", order_id=order.id)
 
         except Exception as e:
             messages.error(request, f"An error occurred while placing the order: {str(e)}")
-            return redirect('checkout')
+            return redirect("checkout")
 
-    return redirect('checkout')
+    return redirect("checkout")
 
+
+def payment_failed(request, order_id):
+    order = get_object_or_404(Order, id=order_id, customer=request.user)
+    return render(request, "orders/checkout/payment_failed.html", {"order": order})
+
+
+@csrf_exempt
+def check_wallet_balance(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            amount = Decimal(data.get("amount"))
+            wallet = request.user.wallet
+
+            if wallet.balance >= amount:
+                return JsonResponse({"success": True})
+            else:
+                return JsonResponse({"success": False})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
+    return JsonResponse({"success": False, "error": "Invalid request method"})
 
 @login_required
 def order_confirmation(request, order_id):
-        # Calculate cart count
+    # Calculate cart count
     if request.user.is_authenticated:
         cart = Cart.objects.filter(customer=request.user).first()
         cart_count = cart.items.count() if cart else 0
+        wishlist = Wishlist.objects.filter(user=request.user).first()
+        wishlist_count = wishlist.items.count() if wishlist else 0
     else:
         cart_count = 0
+        wishlist_count = 0
     order = get_object_or_404(Order, id=order_id, customer=request.user)
-    return render(request, 'orders/order_confirmation.html', {'order': order, 'cart_count': cart_count})
+    return render(request, 'orders/order_confirmation.html', {'order': order, 'cart_count': cart_count,'wishlist_count': wishlist_count})
 
 @login_required
 def wishlist(request):
@@ -565,7 +688,7 @@ def wishlist(request):
     })
 
 
-@login_required
+@login_required(login_url='login_user')
 def add_to_wishlist(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     wishlist, created = Wishlist.objects.get_or_create(user=request.user)
@@ -584,5 +707,40 @@ def remove_from_wishlist(request, product_id):
     wishlist_item.delete()
     messages.success(request, f"{product.title} has been removed from your wishlist.")
     return redirect('wishlist')
+
+
+def paypal_payment(request):
+    if request.method == "POST":
+        payment = Payment({
+            "intent": "sale",
+            "payer": {
+                "payment_method": "paypal"
+            },
+            "redirect_urls": {
+                "return_url": request.build_absolute_uri("/paypal-success/"),
+                "cancel_url": request.build_absolute_uri("/paypal-cancel/")
+            },
+            "transactions": [{
+                "amount": {
+                    "total": request.POST.get("total"),
+                    "currency": "USD"
+                },
+                "description": "Order Payment"
+            }]
+        })
+
+        if payment.create():
+            for link in payment.links:
+                if link.rel == "approval_url":
+                    return redirect(link.href)
+        else:
+            return redirect("checkout")
+        
+
+def paypal_success(request):
+    return render(request, "orders/checkout/paypal/paypal_success.html")
+
+def paypal_cancel(request):
+    return render(request, "orders/checkout/paypal/paypal_cancel.html")
 
 

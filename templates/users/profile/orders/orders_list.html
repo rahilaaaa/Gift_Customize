@@ -1,4 +1,6 @@
-{% load static %}
+<!-- Include SweetAlert2 CSS and JS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <!-- Orders Page Start -->
 <div class="card">
@@ -20,23 +22,45 @@
                     </tr>
                 </thead>
                 <tbody>
-                
                     {% for order in orders %}
                         <tr>
                             <td>#{{ order.id }}</td>
                             <td>{{ order.created_at|date:"m/d/Y" }}</td>
-                            <td class="{% if order.status == 'cancelled' %}text-danger{% elif order.status == 'pending' %}text-warning{% elif order.status == 'processing' %}text-info{% elif order.status == 'shipped' %}text-primary{% elif order.status == 'delivered' %}text-success{% endif %}">{{ order.get_status_display }}</td>
-                            <td>${{ order.total_price|floatformat:0 }}</td>
-                            <td><a href="{% url 'order_detail' order.id %}" >View</a></td>
+                            <td class="
+                            {% if order.status == 'cancelled' %}text-danger
+                            {% elif order.status == 'pending' %}text-warning
+                            {% elif order.status == 'processing' %}text-info
+                            {% elif order.status == 'shipped' %}text-primary
+                            {% elif order.status == 'delivered' %}text-success
+                            {% elif order.status == 'return' %}text-warning
+                            {% elif order.status == 'return_cancelled' %}text-danger
+                            {% elif order.status == 'return_completed' %}text-success
+                            {% endif %}
+                        ">
+                            {{ order.get_status_display }}
+                        </td>                            <td>${{ order.total_price|floatformat:0 }}</td>
+                            <td><a href="{% url 'order_detail' order.id %}">View</a></td>
                             <td>
                                 {% if order.status == 'pending' %}
-                                    <button class="btn btn-danger btn-sm" id="cancelbtn" data-order-id="{{ order.id }}" onclick="confirmOrderCancel('{{ order.id }}')">Cancel</button>
+                                    <button  id="cancelbtn" data-order-id="{{ order.id }}" onclick="confirmOrderCancel('{{ order.id }}')"  style="text-decoration: underline; color: red; border: none; background: none; cursor: pointer;">Cancel</button>
+                                {% comment %} {% elif order.status == 'delivered' %}
+                                <button id="returnbtn" data-order-id="{{ order.id }}" onclick="confirmOrderReturn('{{ order.id }}')" style="text-decoration: underline; color: green; border: none; background: none; cursor: pointer;">
+                                    Return
+                                </button> {% endcomment %}
+                                    {% elif order.status == 'payment_failed' %}
+                                    <button 
+                                   
+                                    id="paymentfailedbtn" 
+                                    data-order-id="{{ order.id }}" 
+                                    
+                                    onclick="retryPayment('{{ order.id }}')"
+                                    style="text-decoration: underline; blue: yellow; border: none; background: none; cursor: pointer;">
+                                    Retry Payment
+                                    </button>  
                                 {% endif %}
                             </td>
-                            
                         </tr>
                     {% endfor %}
-                 
                 </tbody>
             </table>
         </div>
@@ -44,16 +68,63 @@
         <div class="text-center">
             <p>No orders found.</p>
         </div>
-    {% endif %}
+        {% endif %}
     </div>
 </div>
 <!-- Orders Page End -->
 
 <script>
     function confirmOrderCancel(orderId) {
-        if (confirm('Are you sure you want to cancel this order?')) {
-            window.location.href = '{% url "cancel_order" 0 %}'.replace('0', orderId);
-        }
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'You are about to cancel this order. This action cannot be undone!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, cancel it!',
+            cancelButtonText: 'No, go back'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '{% url "cancel_order" 0 %}'.replace('0', orderId);
+            }
+        });
     }
-</script>
 
+    function confirmOrderReturn(orderId) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'You are about to return this order. Please confirm your action!',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, return it!',
+            cancelButtonText: 'No, go back'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '{% url "return_order" 0 %}'.replace('0', orderId);
+            }
+        });
+    }
+
+    function retryPayment(orderId) {
+        Swal.fire({
+            title: 'Retry Payment',
+            text: 'You are about to retry payment for this order. Do you want to proceed?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, retry payment!',
+            cancelButtonText: 'No, go back'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Redirect to checkout page with order_id
+                window.location.href = '{% url "checkout" %}?order_id=' + orderId;
+            }
+        });
+    }
+
+
+</script>

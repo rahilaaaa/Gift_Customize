@@ -3,5 +3,7 @@ from . import views
 
 urlpatterns = [
     
-    path('chat/', views.chat, name='chat'),
+    path("chatbot/", views.chatbot_view, name="chatbot_view"),
+    # path("chat/", views.chat, name="chat_page"),
+
 ]

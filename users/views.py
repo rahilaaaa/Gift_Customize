@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect,get_object_or_404,resolve_url
 from django.contrib.auth import authenticate, login,logout
+from django.contrib.auth import login as auth_login
 from django.contrib.auth import get_user_model, update_session_auth_hash
 from django.core.mail import send_mail
 from django.utils import timezone
@@ -15,18 +16,20 @@ from django.urls import reverse
 from django.views.decorators.cache import never_cache,cache_control
 from django.utils.timezone import now, timedelta
 from datetime import datetime
-from .models import Customer,Transaction
+from .models import Customer,Transaction,Referral,Wallet,ReferralOffer
 from .models import Address
 from .forms import AddressForm  # Assuming you have a form for adding addresses
-from orders.models import Cart,Order,Wishlist
+from orders.models import Cart,Order,Wishlist,OrderItem
 from django.contrib.auth.decorators import login_required
 from .forms import EditAccountForm
-
+from django.http import JsonResponse
+from django.db import transaction
 
 # Generate a 4-digit OTP
 def generate_otp():
     return ''.join([str(random.randint(0, 9)) for _ in range(4)])
 
+@transaction.atomic
 def register(request):
     if request.method == "POST":
         username = request.POST.get('username')
@@ -34,6 +37,7 @@ def register(request):
         phone = request.POST.get('phone')
         password = request.POST.get('password')
         confirm_password = request.POST.get('confirm_password')
+        referral_code = request.POST.get('referral_code')  # Get referral code if provided
 
         # Field validations
         if password != confirm_password:
@@ -55,6 +59,45 @@ def register(request):
 
         # Create user and send OTP
         user = User.objects.create_user(username=username, email=email, phone=phone, password=password)
+        
+        # Create a wallet for the new user
+        Wallet.objects.create(user=user)
+
+        # Create referral code for the new user
+        referral = Referral.objects.create(user=user, code=Referral().generate_referral_code())
+        user.referral_code = referral.code  # Assign referral code to the user
+        user.save()
+
+        # Handle referral logic if referral_code is provided
+        if referral_code:
+            try:
+                referrer = Referral.objects.get(code=referral_code)  # Find the referrer
+                if referrer.user != user:  # Ensure the referrer is not the same as the new user
+                    # Get the active referral offer
+                    active_offer = ReferralOffer.objects.filter(is_active=True, start_date__lte=timezone.now(), end_date__gte=timezone.now()).first()
+                    
+                    if active_offer:
+                        # Add the referred user to the referrer's list
+                        referrer.referred_users.add(user)
+                        referrer.offer = active_offer  # Assign the active offer to the referral
+                        referrer.save()
+
+                        # Add rewards to the referrer's wallet
+                        referrer_wallet, created = Wallet.objects.get_or_create(user=referrer.user)
+                        referrer_wallet.add_funds(active_offer.referrer_reward)
+
+                        # Add rewards to the referred user's wallet
+                        referred_wallet, created = Wallet.objects.get_or_create(user=user)
+                        referred_wallet.add_funds(active_offer.referred_reward)
+
+                        messages.success(request, f"Referral from {referrer.user.username} applied! ₹{active_offer.referrer_reward} added to their wallet and ₹{active_offer.referred_reward} added to your wallet.")
+                    else:
+                        messages.error(request, "No active referral offer found.")
+                else:
+                    messages.error(request, "You cannot refer yourself.")
+            except Referral.DoesNotExist:
+                messages.error(request, "Invalid referral code.")
+
         otp = generate_otp()
         user.otp = make_password(otp)  # Hash the OTP
         user.otp_created_at = timezone.now()
@@ -75,16 +118,32 @@ def register(request):
 
         messages.success(request, "Account created successfully! Please verify your email.")
         return redirect('otp_verification')
-    
 
     return render(request, 'users/account_register.html')
 
 
-@never_cache
-def logout_view(request):
-    logout(request)  # Logs out the user by clearing the session
-    messages.success(request, "You have been logged out successfully.")  # Show a logout success message
-    return redirect('login_user')  # Redirect to the login page or home page
+def logout_user(request):
+    if 'user_auth' in request.session:
+        del request.session['user_auth']
+    if 'admin_auth' in request.session:
+        del request.session['admin_auth']
+    
+    logout(request)
+    
+    response = redirect('login_user')
+    response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    
+    return response
+
+
+# def logout_view(request):
+#     logout(request)  # Logs out the user by clearing the session
+#     request.session.flush()  # Completely clear session data
+#     messages.success(request, "You have been logged out successfully.")  # Show a logout success message
+
+#     return redirect('login_user')  # Redirect to the login page or home page
 
 
 
@@ -221,6 +280,7 @@ def profile(request):
         cart_count = cart.items.count() if cart else 0
         wishlist = Wishlist.objects.filter(user=request.user).first()
         wishlist_count = wishlist.items.count() if wishlist else 0
+        wallet = Wallet.objects.filter(user=request.user).first()  # Fetch the wallet for the logged-in user
     else:
         cart_count = 0
         wishlist_count = 0
@@ -234,8 +294,10 @@ def profile(request):
             return redirect('profile')
     orders = Order.objects.filter(customer=request.user).order_by('-created_at')
     print("Logged-in user:", request.user)
-
+    referral_code = request.user.referral_code
     transactions = Transaction.objects.filter(user=request.user)
+    
+
     context = {
         'addresses': addresses,
         'form': form,
@@ -243,11 +305,49 @@ def profile(request):
         'orders': orders,
         'wishlist_count': wishlist_count,  # Add wishlist count to context
         'transactions': transactions,
+        'referral_code': referral_code,
+        'wallet': wallet,  # Add wallet
+        
     }
     return render(request, 'users/profile/profile.html', context)
 
+def generate_invoice(request, order_id):
+    # Fetch the order and related items
+    order = get_object_or_404(Order, id=order_id)
+    order_items = OrderItem.objects.filter(order=order)
+
+    # Calculate total price (if not already stored in the order model)
+    total_price = sum(item.get_total_price() for item in order_items)
+
+    # Pass data to the template
+    context = {
+        'order': order,
+        'order_items': order_items,
+        'total_price': total_price,
+    }
+    return render(request, 'users/profile/orders/invoice.html', context)
 
 
+def top_up_wallet(request):
+    if request.method == "POST":
+        amount = request.POST.get('amount')
+        if amount and float(amount) > 0:
+            wallet = get_object_or_404(Wallet, user=request.user)
+            wallet.add_funds(float(amount))
+            return JsonResponse({
+                'success': True,
+                'new_balance': wallet.balance,
+                'amount': amount,
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'Invalid amount.',
+            })
+    return JsonResponse({
+        'success': False,
+        'message': 'Invalid request method.',
+    })
 
 def add_new_address(request):
     # First, get `next` from GET if available, otherwise fallback to POST, then default to 'profile'
@@ -317,19 +417,52 @@ def cancel_order(request, order_id):
         messages.error(request, 'Only pending orders can be cancelled.')
     return redirect('profile')
 
+def return_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    if order.status == Order.DELIVERED:  # Ensure the order is delivered
+        order.return_order()  # Call the return_order method to update the status
+    return redirect('profile')  # Redirect back to the profile page
+
+def retry_payment(request, order_id):
+    order = get_object_or_404(Order, id=order_id, customer=request.user)
+    
+    if order.status == Order.PAYMENT_FAILED:
+        # Here, you can integrate your payment gateway logic
+        order.status = Order.PENDING  # Assuming payment will be retried                                           
+        order.save()
+        messages.success(request, 'Payment retry initiated. Please complete the payment.')
+    else:
+        messages.error(request, 'Only failed payments can be retried.')                                                       
+    
+    return redirect('checkout')     
+
 @login_required
 def order_detail(request, order_id):
-    print(order_id)
     order = get_object_or_404(Order, id=order_id, customer=request.user)
-    if request.user.is_authenticated:
-        cart = Cart.objects.filter(customer=request.user).first()
-        cart_count = cart.items.count() if cart else 0
-    else:
-        cart_count = 0
-    return render(request, 'users/profile/orders/order_detail.html', {'order': order, 'cart_count': cart_count})
+    
+    if request.method == "POST":
+        item_id = request.POST.get("item_id")
+        item = get_object_or_404(OrderItem, id=item_id, order=order)
+
+        if item.order.status == Order.DELIVERED and not item.return_status:
+            item.request_return()
+            messages.success(request, "Return request submitted successfully.")
+        else:
+            messages.error(request, "Return request cannot be processed.")
+
+        return redirect("order_detail", order_id=order.id)
+
+    cart = Cart.objects.filter(customer=request.user).first()
+    cart_count = cart.items.count() if cart else 0
+    wishlist = Wishlist.objects.filter(user=request.user).first()
+    wishlist_count = wishlist.items.count() if wishlist else 0
+    
+    return render(request, 'users/profile/orders/order_detail.html', {'order': order, 'cart_count': cart_count, 'wishlist_count': wishlist_count})
 
 @never_cache
-def login_view(request):  
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('home')  # Redirect to home if user is already logged in  
     if request.method == "POST":
         email = request.POST.get("email")
         password = request.POST.get("password")
@@ -348,26 +481,26 @@ def login_view(request):
         user_auth = authenticate(request, email=email, password=password)
 
         if user_auth is not None:
-            if user_auth.is_active == False:
+            if not user_auth.is_active:
                 messages.error(request, "Your account has been blocked. Please contact support.")
                 return redirect('login_user')
-            
-           
 
             if user_auth.is_verified:
                 user.failed_login_attempts = 0  # Reset on successful login
                 user.lockout_until = None
                 user.save()
-                login(request, user_auth)
+
+                # **Set session key for users**
+                request.session['user_auth'] = True  
+
+                auth_login(request, user_auth)
                 messages.success(request, "Successfully logged in.")
                 return redirect('home')
             else:
                 messages.error(request, "Your email is not verified. Please verify your email first.")
                 return redirect('otp_verification')
         else:
-            # Handle failed login attempt
             user.failed_login_attempts += 1
-
             if user.failed_login_attempts >= 3:
                 user.lockout_until = now() + timedelta(hours=24)
                 user.save()
@@ -379,7 +512,8 @@ def login_view(request):
             return redirect('login_user')
 
     return render(request, 'users/account_login.html')
- 
+
+
 @login_required
 def change_password(request):
     if request.method == 'POST':

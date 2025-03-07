@@ -3,6 +3,7 @@ from products.models import Product, ProductVariant, ProductImage,Review,Coupon
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import authenticate, login as auth_login, logout
 from datetime import datetime
+import json
 from django.contrib.auth import get_user_model
 from django.views.decorators.cache import never_cache
 from products.models import Category,Offer
@@ -11,6 +12,7 @@ from django.http import JsonResponse
 from django.core.files.images import get_image_dimensions
 from PIL import Image
 from io import BytesIO
+from django.conf import settings
 from django.db.models import Q
 from orders.models import Order, OrderItem
 from django.db import transaction
@@ -18,8 +20,27 @@ from .forms import CouponForm
 from django.contrib.admin.views.decorators import staff_member_required
 from decimal import Decimal, InvalidOperation
 from django.contrib.contenttypes.models import ContentType
-
-
+from users.models import ReferralOffer
+from django.db.models import Sum, F,Case, When, DecimalField
+from django.utils.dateparse import parse_date
+from datetime import timedelta, date
+from django.http import HttpResponse
+from django.db.models.functions import TruncDate
+from django.utils.timezone import make_aware
+from django.template.loader import render_to_string
+from django.db.models.functions import Concat
+from weasyprint import HTML
+import tempfile
+from django.db.models import Sum, Count,OuterRef, Subquery,F, Value
+import xlwt
+import io
+import logging
+import os
+from django.core.paginator import Paginator
+from users.models import Wallet
+from django.core.exceptions import ValidationError
+from dashboard.decorators import admin_required
+logger = logging.getLogger(__name__)
 
 # Function to check if a user is a superuser
 def is_superuser(user):
@@ -27,9 +48,10 @@ def is_superuser(user):
 
 
 @never_cache
-def login(request):
+def login_admin(request):
     if request.user.is_authenticated and request.user.is_superuser:
-        return redirect('dashboard')  # Redirect superusers to the admin pag
+        return redirect('dashboard')  # Redirect superusers to the admin panel
+    
     if request.method == "POST":
         email = request.POST.get('email')
         password = request.POST.get('password')
@@ -41,6 +63,8 @@ def login(request):
 
         if user is not None:
             if user.is_superuser:
+                # Set session key for admins
+                request.session['admin_auth'] = True  
                 auth_login(request, user)
                 return redirect('dashboard')
             else:
@@ -51,16 +75,100 @@ def login(request):
     return render(request, 'admin/login.html')
 
 
-@login_required(login_url='login')
-@user_passes_test(is_superuser, login_url='login')
+
+
+@login_required(login_url='logout_admin')
+@user_passes_test(is_superuser, login_url='logout_admin')
 def admin(request):
-    print(f"User: {request.user}, Authenticated: {request.user.is_authenticated}, Superuser: {request.user.is_superuser}")
-    return render(request, 'admin/index.html')
-    
-@never_cache
-def logout_view(request):
+    # Get query parameters
+    start_date = request.GET.get("startDate")
+    end_date = request.GET.get("endDate")
+    predefined_range = request.GET.get("predefinedRange")
+
+    today = date.today()
+
+    # Handle predefined date ranges
+    if predefined_range:
+        if predefined_range == "oneDay":
+            start_date, end_date = today - timedelta(days=1), today
+        elif predefined_range == "oneWeek":
+            start_date, end_date = today - timedelta(weeks=1), today
+        elif predefined_range == "oneMonth":
+            start_date, end_date = today - timedelta(days=30), today
+        elif predefined_range == "oneYear":
+            start_date, end_date = today - timedelta(days=365), today
+    else:
+        # Convert date strings to date objects
+        start_date = parse_date(start_date) if start_date else today - timedelta(days=30)
+        end_date = parse_date(end_date) if end_date else today
+
+    # Ensure dates are timezone-aware
+    start_date = make_aware(datetime.combine(start_date, datetime.min.time()))
+    end_date = make_aware(datetime.combine(end_date, datetime.max.time()))
+
+    # Filter orders based on date range
+    orders = Order.objects.filter(created_at__range=[start_date, end_date])
+
+    # Compute total sales
+    total_sales_count = orders.count()
+    total_order_amount = orders.aggregate(Sum('total_price'))['total_price__sum'] or 0
+
+    # Sales data for chart
+    sales_data = orders.annotate(date=TruncDate('created_at')).values('date').annotate(
+        total_sales=Count('id'),
+        revenue=Sum('total_price')
+    ).order_by('date')
+
+    dates = [entry['date'].strftime('%Y-%m-%d') for entry in sales_data]
+    total_sales = [entry['total_sales'] for entry in sales_data]
+    revenue = [float(entry['revenue']) for entry in sales_data]
+
+    # Pass data to template
+    context = {
+        "orders": orders,
+        "total_sales_count": total_sales_count,
+        "total_order_amount": total_order_amount,
+        "sales_dates": json.dumps(dates),
+        "sales_counts": json.dumps(total_sales),
+        "sales_revenue": json.dumps(revenue),
+    }
+    return render(request, 'admin/index.html', context)
+
+# def export_orders_excel(request):
+#     """Export filtered orders as an Excel file."""
+#     orders = get_filtered_orders(request)
+
+#     output = io.BytesIO()
+#     workbook = xlsxwriter.Workbook(output)
+#     worksheet = workbook.add_worksheet()
+
+#     # Define headers
+#     headers = ["Order ID", "Customer", "Total Price", "Created At", "Total Discount"]
+#     for col_num, header in enumerate(headers):
+#         worksheet.write(0, col_num, header)
+
+#     # Write order data
+#     for row_num, order in enumerate(orders, start=1):
+#         worksheet.write(row_num, 0, order.id)
+#         worksheet.write(row_num, 1, str(order.customer))  # Assuming order has a customer field
+#         worksheet.write(row_num, 2, order.total_price)
+#         worksheet.write(row_num, 3, order.created_at.strftime("%Y-%m-%d"))
+#         worksheet.write(row_num, 4, calculate_total_discount(order))
+
+#     workbook.close()
+#     output.seek(0)
+
+#     response = HttpResponse(output, content_type="application/vnd.ms-excel")
+#     response["Content-Disposition"] = 'attachment; filename="orders.xlsx"'
+#     return response
+
+def logout_admin(request):
+    if 'admin_auth' in request.session:
+        del request.session['admin_auth']  # Clear admin session key
+    if 'user_auth' in request.session:
+        del request.session['user_auth']  # Clear user session key
     logout(request)
-    return redirect('login')
+    return redirect('login_admin')
 
 def reviews(request):
     # Get the search query from the request
@@ -230,9 +338,8 @@ def edit_product(request, product_id):
                                 variant.liter = None
                                 variant.view_flex = view_flex or None
 
-                            # Update additional fields
-
-                            
+                            # Log the variant fields before saving
+                            logger.info(f"Updating variant {i} with fields: {variant.__dict__}")
 
                             variant.save()
                         except Exception as e:
@@ -256,7 +363,6 @@ def edit_product(request, product_id):
     }
     return render(request, 'admin/product/edit_product.html', context)
 
-
 def delete_product(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     product.delete()
@@ -264,7 +370,7 @@ def delete_product(request, product_id):
     return redirect('products')  # Redirect to the product list page
 
 
-@user_passes_test(is_superuser, login_url='login')
+@user_passes_test(is_superuser, login_url='login_admin')
 def add_products(request):
     if request.method == 'POST':
         # Retrieve form data
@@ -397,7 +503,7 @@ def orders_list(request):
     order_id_search = request.GET.get('order_id', '')
 
     # Fetch orders based on search query and filters
-    orders = Order.objects.all()
+    orders = Order.objects.all().order_by('-created_at')  # Order by latest first
 
     if search_query:
         orders = orders.filter(
@@ -419,17 +525,48 @@ def orders_list(request):
     })
 
 
-# @staff_member_required
+@staff_member_required
 def order_details(request, order_id):
     order = get_object_or_404(Order, id=order_id)
+
     if request.method == 'POST':
-        new_status = request.POST.get('status')
-        if new_status:
-            order.status = new_status
-            order.save()
-            messages.success(request, "Order status updated successfully.")
-            return redirect('orders_list')  # Redirect to orders_list page
-    # Fetch the order items
+        if 'status' in request.POST:
+            # Update the order status
+            new_status = request.POST.get('status')
+            if new_status:
+                previous_status = order.status
+                order.status = new_status
+                order.save()
+
+                # If the return is completed, refund to the wallet
+                if new_status == Order.RETURN_COMPLETED and previous_status != Order.RETURN_COMPLETED:
+                    try:
+                        wallet, created = Wallet.objects.get_or_create(user=order.customer)
+                        wallet.add_funds(order.total_price)
+                        messages.success(request, f"₹{order.total_price} added to user's wallet.")
+                    except ValidationError as e:
+                        messages.error(request, f"Error updating wallet: {str(e)}")
+                else:
+                    messages.success(request, "Order status updated successfully.")
+
+                return redirect('order_details', order_id=order.id)
+
+        elif 'return_action' in request.POST:
+            # Handle return approvals/rejections for individual items
+            item_id = request.POST.get('item_id')
+            action = request.POST.get('return_action')
+
+            item = get_object_or_404(OrderItem, id=item_id)
+
+            if action == 'approve':
+                item.approve_return()
+                messages.success(request, f"Return approved for {item.product.title}.")
+            elif action == 'reject':
+                item.reject_return()
+                messages.error(request, f"Return rejected for {item.product.title}.")
+
+            return redirect('order_details', order_id=order.id)
+
     order_items = OrderItem.objects.filter(order=order)
 
     return render(request, 'admin/orders/order-details.html', {
@@ -505,14 +642,17 @@ def delete_coupon(request, coupon_id):
 def offer(request):
     # Fetch all offers and optimize queries using select_related and prefetch_related
     offers = Offer.objects.select_related('content_type').all()
+    
+    # Fetch all referral offers
+    referral_offers = ReferralOffer.objects.all()
 
-    # Render the offers.html template and pass the offers as context
+    # Render the offers.html template and pass both offers and referral_offers as context
     context = {
-        'offers': offers
+        'offers': offers,
+        'referral_offers': referral_offers,  # Pass referral offers to the template
     }
     
     return render(request, 'admin/offers/offers.html', context)
-
 
 def apply_offer(request, offer_id):
     offer = get_object_or_404(Offer, id=offer_id)
@@ -846,3 +986,198 @@ def delete_category(request, category_id):
     category.delete()
     messages.success(request, "Category deleted successfully.")
     return redirect('categories')
+
+
+def create_referral_offer(request):
+    if request.method == 'POST':
+        try:
+            ReferralOffer.objects.create(
+                offer_name=request.POST.get('offer_name'),
+                description=request.POST.get('description'),
+                referrer_reward=request.POST.get('referrer_reward'),
+                referred_reward=request.POST.get('referred_reward'),
+                start_date=request.POST.get('start_date'),
+                end_date=request.POST.get('end_date') or None,
+                is_active=request.POST.get('is_active') == 'on'
+            )
+            messages.success(request, 'Referral offer created successfully!')
+            return redirect('offers')
+        except Exception as e:
+            messages.error(request, f'Error creating offer: {str(e)}')
+    
+    return render(request, 'admin/offers/create_referral_offer.html')
+
+
+def create_referral_offer(request):
+    if request.method == 'POST':
+        try:
+            ReferralOffer.objects.create(
+                offer_name=request.POST.get('offer_name'),
+                description=request.POST.get('description'),
+                referrer_reward=request.POST.get('referrer_reward'),
+                referred_reward=request.POST.get('referred_reward'),
+                start_date=request.POST.get('start_date'),
+                end_date=request.POST.get('end_date') or None,
+                is_active=request.POST.get('is_active') == 'on'
+            )
+            messages.success(request, 'Referral offer created successfully!')
+            return redirect('offer_list')
+        except Exception as e:
+            messages.error(request, f'Error creating offer: {str(e)}')
+    return render(request, 'admin/offers/create_referral_offer.html')
+
+def edit_referral_offer(request, offer_id):
+    referral_offer = get_object_or_404(ReferralOffer, id=offer_id)
+    if request.method == 'POST':
+        try:
+            referral_offer.offer_name = request.POST.get('offer_name')
+            referral_offer.description = request.POST.get('description')
+            referral_offer.referrer_reward = request.POST.get('referrer_reward')
+            referral_offer.referred_reward = request.POST.get('referred_reward')
+            referral_offer.start_date = request.POST.get('start_date')
+            referral_offer.end_date = request.POST.get('end_date') or None
+            referral_offer.is_active = request.POST.get('is_active') == 'on'
+            referral_offer.save()
+            messages.success(request, 'Referral offer updated successfully!')
+            return redirect('offers')
+        except Exception as e:
+            messages.error(request, f'Error updating offer: {str(e)}')
+    return render(request, 'admin/offers/edit_referral_offer.html', {'offer': referral_offer})
+
+def toggle_referral_offer(request, offer_id):
+    referral_offer = get_object_or_404(ReferralOffer, id=offer_id)
+    referral_offer.is_active = not referral_offer.is_active
+    referral_offer.save()
+    action = "activated" if referral_offer.is_active else "deactivated"
+    messages.success(request, f'Offer {action} successfully!')
+    return redirect('offers')
+
+def delete_referral_offer(request, offer_id):
+    referral_offer = get_object_or_404(ReferralOffer, id=offer_id)
+    referral_offer.delete()
+    messages.success(request, 'Offer deleted successfully!')
+    return redirect('offer_list')
+
+
+def export_orders_excel(request):
+    start_date = request.GET.get("startDate")
+    end_date = request.GET.get("endDate")
+    predefined_range = request.GET.get("predefinedRange")
+
+    if start_date:
+        start_date = parse_date(start_date)
+    if end_date:
+        end_date = parse_date(end_date)
+
+    today = date.today()
+    if predefined_range:
+        if predefined_range == "oneDay":
+            start_date, end_date = today - timedelta(days=1), today
+        elif predefined_range == "oneWeek":
+            start_date, end_date = today - timedelta(weeks=1), today
+        elif predefined_range == "oneMonth":
+            start_date, end_date = today - timedelta(days=30), today
+        elif predefined_range == "oneYear":
+            start_date, end_date = today - timedelta(days=365), today
+
+    orders = Order.objects.all()
+    if start_date and end_date:
+        orders = orders.filter(created_at__range=[start_date, end_date])
+
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="sales_report.xls"'
+
+    wb = xlwt.Workbook(encoding='utf-8')
+    ws = wb.add_sheet('Sales Report')
+
+    # Define headers
+    row_num = 0
+    font_style = xlwt.XFStyle()
+    font_style.font.bold = True
+    columns = ['Order ID', 'Customer', 'Date', 'Total Price', 'Total Discount', 'Payment Status']
+
+    for col_num, column_title in enumerate(columns):
+        ws.write(row_num, col_num, column_title, font_style)
+
+    # Fetch filtered order data
+    font_style = xlwt.XFStyle()
+    orders = orders.values_list('id', 'customer__username', 'created_at', 'total_price', 'total_discount', 'payment_status')
+
+    for order in orders:
+        row_num += 1
+        for col_num, cell_value in enumerate(order):
+            ws.write(row_num, col_num, str(cell_value), font_style)
+
+    wb.save(response)
+    return response
+
+
+def export_orders_pdf(request):
+    start_date = request.GET.get("startDate")
+    end_date = request.GET.get("endDate")
+    predefined_range = request.GET.get("predefinedRange")
+
+    if start_date:
+        start_date = parse_date(start_date)
+    if end_date:
+        end_date = parse_date(end_date)
+
+    today = date.today()
+    if predefined_range:
+        if predefined_range == "oneDay":
+            start_date, end_date = today - timedelta(days=1), today
+        elif predefined_range == "oneWeek":
+            start_date, end_date = today - timedelta(weeks=1), today
+        elif predefined_range == "oneMonth":
+            start_date, end_date = today - timedelta(days=30), today
+        elif predefined_range == "oneYear":
+            start_date, end_date = today - timedelta(days=365), today
+
+    orders = Order.objects.all()
+    if start_date and end_date:
+        orders = orders.filter(created_at__range=[start_date, end_date])
+
+    html_string = render_to_string('admin/orders_pdf_template.html', {'orders': orders})
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="sales_report.pdf"'
+
+    temp_file_path = os.path.join(tempfile.gettempdir(), "sales_report.pdf")
+
+    try:
+        HTML(string=html_string).write_pdf(temp_file_path)
+        
+        with open(temp_file_path, 'rb') as pdf_file:
+            response.write(pdf_file.read())
+
+    finally:
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
+
+    return response
+
+def bestselling(request):
+    # Best selling products (considering only completed orders)
+    top_products = Product.objects.filter(
+        order_items__order__status__in=['delivered', 'shipped']
+    ).annotate(
+        total_sold=Sum('order_items__quantity'),
+        total_revenue=Sum(F('order_items__quantity') * F('order_items__price'))
+    ).order_by('-total_sold')[:10]
+
+    # Top selling categories
+    top_categories = Category.objects.annotate(
+        total_sold=Sum(
+            'product__order_items__quantity',
+            filter=Q(product__order_items__order__status__in=['delivered', 'shipped'])
+        ),
+        total_revenue=Sum(
+            F('product__order_items__quantity') * F('product__order_items__price'),
+            filter=Q(product__order_items__order__status__in=['delivered', 'shipped'])
+        )
+    ).exclude(total_sold=None).order_by('-total_revenue')[:5]
+
+    context = {
+        'top_products': top_products,
+        'top_categories': top_categories,
+    }
+    return render(request, 'admin/bestselling/bestselling.html', context)

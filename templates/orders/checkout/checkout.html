@@ -1,192 +1,382 @@
 {% load static %}
 
-{% block head %}
-    {% include "products/head.html" %}
+<!DOCTYPE html>
+<html lang="en">
+  {% block head %}
+  {% include "products/head.html" %}
 {% endblock head %}
 
 <body>
 
-{% block topbar %}
-    {% include "products/topbar.html" %}
-{% endblock topbar %}
+    {% block topbar %}
+        {% include "products/topbar.html" %}
+    {% endblock topbar %}
 
-{% block navbar %}
-    {% include "products/navbar.html" %}
-{% endblock navbar %}
+    {% block navbar %}
+        {% include "products/navbar.html" %}
+    {% endblock navbar %}
 
-<!-- Checkout Page Start -->
-<div class="container-fluid py-5">
-  <div class="row px-xl-5">
-    
-    <!-- Address Portion Start -->
-    <div class="col-lg-8">
-      <div class="card border-secondary mb-5">
-        <div class="card-header bg-secondary border-0">
-          <h4 class="font-weight-semi-bold m-0">My Addresses</h4>
-        </div>
-        <div class="card-body">
-          <div class="address-card">
-            {% for address in user_addresses %}
-              <label class="address-item d-flex align-items-start mb-4">
-                <input type="radio" name="address" value="{{ address.id }}" class="mr-3 mt-1">
-                <div class="address-details">
-                  <strong>{{ address.name }}</strong>
-                  <p>{{ address.street }}</p>
-                  <p>{{ address.city }}, {{ address.state }}, {{ address.country }}</p>
-                  <p>Pin: {{ address.pincode }}</p>
-                  <p>Mobile No: {{ address.mobile }}</p>
-                  <a href="{% url "edit_address" address.id %}" class="edit-link text-primary">Edit Address</a>
+    <div class="container-fluid py-5">
+        <div class="row px-xl-5">
+            <div class="col-lg-8">
+                <div class="card border-secondary mb-5">
+                    <div class="card-header bg-secondary border-0">
+                        <h4 class="font-weight-semi-bold m-0">My Addresses</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="address-card">
+                            {% for address in user_addresses %}
+                                <label class="address-item d-flex align-items-start mb-4">
+                                    <input type="radio" name="address" value="{{ address.id }}" class="mr-3 mt-1" 
+                                        {% if order and order.shipping_address.id == address.id %}checked{% endif %}>
+                                    <div class="address-details">
+                                        <strong>{{ address.name }}</strong>
+                                        <p>{{ address.street }}</p>
+                                        <p>{{ address.city }}, {{ address.state }}, {{ address.country }}</p>
+                                        <p>Pin: {{ address.pincode }}</p>
+                                        <p>Mobile No: {{ address.mobile }}</p>
+                                        <a href="{% url 'edit_address' address.id %}" class="edit-link text-primary">Edit Address</a>
+                                    </div>
+                                </label>
+                            {% empty %}
+                                <p>No addresses found. <a href="{% url 'add_address' %}?next={% url 'checkout' %}" class="text-primary">Add a new address</a></p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="card-footer border-secondary bg-transparent">
+                        <a href="{% url 'add_address' %}?next=/orders/checkout/" class="btn btn-primary">Click here to Add New Address</a>
+                    </div>
                 </div>
-              </label>
-            {% empty %}
-              <p>No addresses found. <a href="{% url 'add_address' %}?next={% url 'checkout' %}" class="text-primary">Add a new address</a></p>
-            {% endfor %}
-          </div>
+            </div>
+
+            <div class="col-lg-4">
+                <form class="mb-5" action="{% url 'apply_coupon' %}" method="POST">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input type="text" name="coupon_code" class="form-control p-4" placeholder="Coupon Code">
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" type="submit">Apply Coupon</button>
+                        </div>
+                    </div>
+                    <br>
+                    {% if meets_minimum_purchase %}
+                        <div class="input-group">
+                            <div class="input-group-append">
+                                <button class="btn btn-secondary" type="button" onclick="toggleCoupons()">Show Coupons</button>
+                            </div>
+                        </div>
+                    {% endif %}
+                </form>
+
+                <div id="couponsSection" class="card border-secondary mb-5" style="display: none;">
+                    <div class="card-header bg-secondary border-0">
+                        <h4 class="font-weight-semi-bold m-0">Available Coupons</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group">
+                            {% for coupon in active_coupons %}
+                                <li class="list-group-item">
+                                    <strong>{{ coupon.code }}</strong>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card border-secondary mb-5">
+                    <div class="card-header bg-secondary border-0">
+                        <h4 class="font-weight-semi-bold m-0">Order Summary</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3 pt-1">
+                            <h6 class="font-weight-medium">Subtotal</h6>
+                            <h6 id="cartSubtotal">₹{{ subtotal|floatformat:0 }}</h6>
+                        </div>
+                        {% if request.session.coupon_discount %}
+                            <div class="d-flex justify-content-between mb-3">
+                                <h6 class="font-weight-medium">Coupon Discount</h6>
+                                <h6 class="text-success">- ₹{{ request.session.coupon_discount }}</h6>
+                            </div>
+                        {% endif %}
+                        <div class="d-flex justify-content-between">
+                            <h6 class="font-weight-medium">Shipping</h6>
+                            <h6>₹{{ shipping_cost }}</h6>
+                        </div>
+                    </div>
+                    <div class="card-footer border-secondary bg-transparent">
+                        <div class="d-flex justify-content-between mt-2">
+                            <h5 class="font-weight-bold">Total</h5>
+                            <h5 id="cartTotal">₹{{ total|floatformat:0 }}</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-secondary">
+                    <div class="card-header bg-secondary border-0">
+                        <h4 class="font-weight-semi-bold m-0">Payment Options</h4>
+                    </div>
+                    <div class="card-body">
+                        <label class="d-flex align-items-center mb-3">
+                            <input type="radio" name="payment_method" value="cod" class="mr-3 mt-1" 
+                                {% if order and order.payment_method == 'cod' %}checked{% endif %}>
+                            <span>Cash on Delivery</span>
+                        </label>
+                        <label class="d-flex align-items-center mb-3">
+                            <input type="radio" name="payment_method" value="razorpay" class="mr-3 mt-1" 
+                                {% if order and order.payment_method == 'razorpay' %}checked{% endif %}>
+                            <span>Pay with Razorpay</span>
+                        </label>
+                                <!-- New Wallet Payment Option -->
+                        <label class="d-flex align-items-center mb-3">
+                            <input type="radio" name="payment_method" value="wallet" class="mr-3 mt-1" 
+                                {% if order and order.payment_method == 'wallet' %}checked{% endif %}>
+                            <span> Wallet (Balance: ₹{{ request.user.wallet.balance|default:"0.00" }})</span>
+                        </label>
+                        <label class="d-flex align-items-center mb-3">
+                            <input type="radio" name="payment_method" value="paypal" class="mr-3 mt-1" 
+                                {% if order and order.payment_method == 'paypal' %}checked{% endif %}>
+                            <span>Pay with PayPal</span>
+                        </label>
+                        <div id="paypal-button-container"></div>
+                    </div>
+                    <div class="card-footer border-secondary bg-transparent">
+                        <button type="submit" class="btn btn-block btn-primary my-3 py-3" id="placeOrderButton">Place Order</button>
+                    </div>
+                </div>
+
+            </div>
         </div>
-        <div class="card-footer border-secondary bg-transparent">
-          <a href="{% url 'add_address' %}?next=/orders/checkout/" class="btn btn-primary">Click here to Add New Address</a>
-        </div>
-      </div>
     </div>
-    <!-- Address Portion End -->
 
-    <!-- Order Summary and Payment Section Start -->
-    <div class="col-lg-4">
-      <div class="card border-secondary mb-5">
-        <div class="card-header bg-secondary border-0">
-          <h4 class="font-weight-semi-bold m-0">Order Summary</h4>
-        </div>
+    <!-- Hidden fields to store Razorpay payment details -->
+    <form id="orderForm" method="POST" action="{% url 'place_order' %}">
+        {% csrf_token %}
+        <input type="hidden" name="address" id="selectedAddress">
+        <input type="hidden" name="payment_method" id="selectedPaymentMethod">
+        <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
+        <input type="hidden" name="razorpay_order_id" id="razorpay_order_id">
+        <input type="hidden" name="razorpay_signature" id="razorpay_signature">
+        {% if order %}
+            <input type="hidden" name="order_id" value="{{ order.id }}">
+        {% endif %}
+    </form>
 
-        <!-- Order Items Start -->
-        <div class="card-body">
-          <h5>Your Orders</h5>
-          <table class="table table-bordered">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th class="text-center">Quantity</th>
-                <th class="text-right">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for item in cart_items %}
-              <tr>
-                <td class="d-flex align-items-center">
-                  {% if item.product.images.first %}
-                  <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.title }}" style="width: 50px; height: 50px; object-fit: cover; margin-right: 10px;">
-                  {% endif %}
-                  <span>{{ item.product.title }}</span>
-                </td>
-                <td class="text-center">{{ item.quantity }}</td>
-                <td class="text-right">₹{{ item.price|floatformat:2 }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        <!-- Order Items End -->
+    <!-- Include PayPal SDK -->
+    <script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD"></script>
 
-        <div class="card-body">
-          <div class="d-flex justify-content-between mb-3 pt-1">
-            <h6 class="font-weight-medium">Subtotal</h6>
-            <h6 id="cartSubtotal">${{ subtotal }}</h6>
-          </div>
-          
-          {% if request.session.coupon_discount %}
-          <div class="d-flex justify-content-between mb-3">
-              <h6 class="font-weight-medium">Coupon Discount</h6>
-              <h6 class="text-success">-${{ request.session.coupon_discount }}</h6>
-          </div>
-          {% endif %}  
-          
-          <div class="d-flex justify-content-between">
-              <h6 class="font-weight-medium">Shipping</h6>
-              <h6>${{ shipping_cost }}</h6>
-          </div>
-        </div>
-        
-        <div class="card-footer border-secondary bg-transparent">
-          <div class="d-flex justify-content-between mt-2">
-              <h5 class="font-weight-bold">Total</h5>
-              <h5 id="cartTotal">${{ total|floatformat:2 }}</h5>
-          </div>
-        </div>
+    <!-- Include Razorpay SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-        <!-- Payment Options Start -->
-        <div class="card border-secondary">
-          <div class="card-header bg-secondary border-0">
-            <h4 class="font-weight-semi-bold m-0">Payment Options</h4>
-          </div>
-          <div class="card-body">
-            <label class="d-flex align-items-center mb-3">
-              <input type="radio" name="payment_method" value="cod" class="mr-3 mt-1">
-              <span>Cash on Delivery</span>
-            </label>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-            <label class="d-flex align-items-center">
-              <input type="radio" name="payment_method" value="razorpay" class="mr-3 mt-1">
-              <span>Pay with Razorpay</span>
-            </label>
-          </div>
-          <div class="card-footer border-secondary bg-transparent">
-            <button type="submit" class="btn btn-block btn-primary my-3 py-3" id="placeOrderButton">Place Order</button>
-          </div>
-        </div>
-        <!-- Payment Options End -->
 
-      </div>
-    </div>
-    <!-- Order Summary and Payment Section End -->
-  </div>
-</div>
-<!-- Checkout Page End -->
 
-<form id="orderForm" method="POST" action="{% url 'place_order' %}">
-    {% csrf_token %}
-    <input type="hidden" name="address" id="selectedAddress">
-    <input type="hidden" name="payment_method" id="selectedPaymentMethod">
-    <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
-</form>
+    <script>
+        document.getElementById('placeOrderButton').addEventListener('click', function (event) {
+            event.preventDefault();
 
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-<script>
-  document.getElementById('placeOrderButton').addEventListener('click', function (event) {
-    event.preventDefault();
-    const selectedPaymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
-    const selectedAddress = document.querySelector('input[name="address"]:checked')?.value;
+            const selectedPaymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
+            const selectedAddress = document.querySelector('input[name="address"]:checked')?.value;
+            const totalAmount = parseFloat(document.getElementById('cartTotal').textContent.replace('₹', '').replace(',', ''));
 
-    if (!selectedPaymentMethod) {
-      alert('Please select a payment method.');
-      return;
-    }
+            if (!selectedPaymentMethod) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Payment Method Required',
+                    text: 'Please select a payment method before proceeding.',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
 
-    if (!selectedAddress) {
-      alert('Please select an address.');
-      return;
-    }
+            if (!selectedAddress) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Address Required',
+                    text: 'Please select an address before placing your order.',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
 
-    document.getElementById('selectedPaymentMethod').value = selectedPaymentMethod;
-    document.getElementById('selectedAddress').value = selectedAddress;
+            // 🚨 COD Restriction: Prevent COD if total > ₹1000
+            if (selectedPaymentMethod === "cod" && totalAmount > 1000) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'COD Not Available',
+                    text: 'Cash on Delivery is not available for orders above ₹1000.',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
 
-    if (selectedPaymentMethod === 'razorpay') {
-      var options = {
-        "key": "YOUR_RAZORPAY_KEY", 
-        "amount": {{ total|floatformat:2 }} * 100, 
-        "currency": "INR",
-        "name": "Your Company Name",
-        "description": "Order Payment",
-        "handler": function (response) {
-          document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
-          document.getElementById('orderForm').submit();
-        },
-        "theme": {
-          "color": "#3399cc"
-        }
-      };
-      var rzp = new Razorpay(options);
-      rzp.open();
-    } else {
-      document.getElementById('orderForm').submit();
-    }
-  });
-</script>
+            // Set selected address and payment method
+            document.getElementById('selectedAddress').value = selectedAddress;
+            document.getElementById('selectedPaymentMethod').value = selectedPaymentMethod;
+
+            if (selectedPaymentMethod === 'wallet') {
+                // Ask for confirmation before proceeding
+                Swal.fire({
+                    icon: 'question',
+                    title: 'Confirm Wallet Payment',
+                    text: 'Are you sure you want to proceed with wallet payment?',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, proceed',
+                    cancelButtonText: 'No, cancel',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // User confirmed, proceed with wallet balance check
+                        fetch("{% url 'check_wallet_balance' %}", {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({ amount: totalAmount })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // If wallet has sufficient balance, submit the form
+                                document.getElementById('orderForm').submit();
+                            } else {
+                                // If wallet has insufficient balance, show a popup
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Insufficient Balance',
+                                    text: 'Your wallet does not have sufficient balance. Please choose another payment method.',
+                                    confirmButtonText: 'OK'
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'An error occurred while checking your wallet balance.',
+                                confirmButtonText: 'OK'
+                            });
+                            console.error("Error:", error);
+                        });
+                    } else {
+                        // User canceled, do nothing or show a message
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Payment Canceled',
+                            text: 'Wallet payment was not processed.',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                });
+            } // <-- Add this closing brace
+            
+            // Handle payment methods (Razorpay, PayPal, or direct submission)
+            else if (selectedPaymentMethod === 'razorpay') { // <-- Fix typo: 'razorpay' instead of 'razorpay'
+                fetch("{% url 'create_razorpay_order' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ amount: {{ total|floatformat:2 }} })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    var options = {
+                        "key": data.key,
+                        "amount": data.amount,
+                        "currency": "INR",
+                        "name": "Zyft",
+                        "description": "Order Payment",
+                        "order_id": data.order_id,
+                        "handler": function(response) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Payment Successful',
+                                text: 'Your payment has been completed successfully!',
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
+                                document.getElementById('razorpay_order_id').value = data.order_id;
+                                document.getElementById('razorpay_signature').value = response.razorpay_signature;
+                                document.getElementById('orderForm').submit();
+                            });
+                        },
+                        "theme": { "color": "#3399cc" }
+                    };
+            
+                    var rzp = new Razorpay(options);
+            
+                 // In Razorpay's payment.failed handler:
+                rzp.on('payment.failed', function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Payment Failed',
+                        text: 'Payment failed. Please try again.',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        const paymentFailedInput = document.createElement('input');
+                        paymentFailedInput.type = 'hidden';
+                        paymentFailedInput.name = 'payment_failed';
+                        paymentFailedInput.value = 'true';
+                        document.getElementById('orderForm').appendChild(paymentFailedInput);
+
+                        // Add order_id to the form if retrying payment
+                        const orderIdInput = document.createElement('input');
+                        orderIdInput.type = 'hidden';
+                        orderIdInput.name = 'order_id';
+                        orderIdInput.value = '{{ order.id }}';  // Pass order ID from template context
+                        document.getElementById('orderForm').appendChild(orderIdInput);
+
+                        document.getElementById('orderForm').submit();
+                    });
+                });
+                    rzp.open();
+                })
+                .catch(error => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Payment Error',
+                        text: 'Error in processing payment. Please try again.',
+                        confirmButtonText: 'OK'
+                    });
+                    console.error("Error:", error);
+                });
+            } else if (selectedPaymentMethod === "paypal") {
+                paypal.Buttons({
+                    createOrder: function(data, actions) {
+                        return actions.order.create({
+                            purchase_units: [{ amount: { value: '{{ total|floatformat:0 }}', currency_code: 'USD' } }]
+                        });
+                    },
+                    onApprove: function(data, actions) {
+                        return actions.order.capture().then(function(details) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Payment Successful',
+                                text: `Transaction completed by ${details.payer.name.given_name}`,
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                document.getElementById('orderForm').submit();
+                            });
+                        });
+                    },
+                    onError: function(err) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Payment Failed',
+                            text: 'Payment failed. Please try again.',
+                            confirmButtonText: 'OK'
+                        });
+                        console.error(err);
+                    }
+                }).render('#paypal-button-container');
+            } else {
+                document.getElementById('orderForm').submit();
+            }
+        });
+    </script>
+
+    <script src="{% static '/js/coupontoggle.js' %}" type="text/javascript"></script>
+</body>
+</html>

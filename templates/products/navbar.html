@@ -15,12 +15,12 @@
                 <div class="navbar-nav py-0">
                     <a href="{% url "home" %}" class="nav-item nav-link active">Home</a>
                     <a href="{% url "shop" %}" class="nav-item nav-link">Shop</a>
-                    <a href="{% url "chat" %}" class="nav-item nav-link">Chatbot</a>
+                    <a href="{% url "chatbot_view" %}" class="nav-item nav-link">Chatbot</a>
                 </div>
 
                 {% if request.user.is_authenticated  %}
                     <div class="navbar-nav ml-auto py-0">
-                        <a href="{% url "login_user" %}" class="nav-item nav-link">Logout</a>
+                        <a href="{% url "logout_user" %}" class="nav-item nav-link">Logout</a>
                     </div>
                 {% else %}
                     <div class="navbar-nav ml-auto py-0">

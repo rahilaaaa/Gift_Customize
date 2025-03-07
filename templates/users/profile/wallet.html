@@ -5,69 +5,10 @@
     </div>
     <div class="card-body">
         <div class="wallet mb-4">
-            <h4><b>Wallet Balance:</b> INR <span id="balance" style="color: green;">0</span></h4>
-        </div>
+    <!-- Display balance with fallback to 0 -->
+        <h4><b>Wallet Balance:</b> INR <span id="balance" style="color: green;">{{ wallet.balance|default:"0.00" }}</span></h4>        </div>
         <div class="row">
-            <div class="col-md-6 mb-4">
-                <div class="card border-secondary">
-                    <div class="card-body">
-                        <h5 class="card-title">Top Up Wallet</h5>
-                        <form id="top-up-form">
-                            <div class="form-group">
-                                <label for="top-up-amount">Amount (INR):</label>
-                                <input type="number" class="form-control" id="top-up-amount" placeholder="Enter amount">
-                            </div>
-                            <button type="submit" class="btn btn-primary mt-3">Top Up</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 mb-4">
-                <div class="card border-secondary">
-                    <div class="card-body">
-                        <h5 class="card-title">Recent Transactions</h5>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item">Topped up INR 500 on Feb 8, 2025</li>
-                            <li class="list-group-item">Spent INR 200 on Order #1234 on Feb 10, 2025</li>
-                            <li class="list-group-item">Topped up INR 300 on Feb 15, 2025</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="card border-secondary">
-            <div class="card-body">
-                <h5 class="card-title">Wallet Activity Summary</h5>
-                <p>Total Top-Ups: INR 1000</p>
-                <p>Total Spent: INR 200</p>
-                <p>Available Balance: INR 800</p>
-            </div>
-        </div>
+      
     </div>
 </div>
 
-<script>
-    document.getElementById('top-up-form').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const amount = document.getElementById('top-up-amount').value;
-        if (amount && amount > 0) {
-            // Update the wallet balance (this is just a simulation, actual implementation will involve backend logic)
-            const balanceElement = document.getElementById('balance');
-            const currentBalance = parseInt(balanceElement.textContent);
-            const newBalance = currentBalance + parseInt(amount);
-            balanceElement.textContent = newBalance;
-
-            // Add the transaction to the recent transactions list
-            const transactionList = document.querySelector('.list-group');
-            const newTransaction = document.createElement('li');
-            newTransaction.className = 'list-group-item';
-            newTransaction.textContent = `Topped up INR ${amount} on ${new Date().toLocaleDateString()}`;
-            transactionList.insertBefore(newTransaction, transactionList.firstChild);
-
-            // Clear the input field
-            document.getElementById('top-up-amount').value = '';
-        } else {
-            alert('Please enter a valid amount.');
-        }
-    });
-</script>

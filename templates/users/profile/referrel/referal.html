@@ -6,20 +6,20 @@
     <div class="card-body">
         <p>Share your referral code with friends and family to earn rewards!</p>
         <div class="input-group mb-3">
-            <input type="text" class="form-control" id="referralCode" value="{{ request.user.profile.referral_code }}" readonly>
+            <input type="text" class="form-control" id="referralCode" value="{{ referral_code }}" readonly>
             <div class="input-group-append">
                 <button class="btn btn-primary" type="button" onclick="copyReferralCode()">Copy</button>
             </div>
         </div>
         <p>Share your referral link:</p>
         <div class="d-flex justify-content-between">
-            <a href="mailto:?subject=Join%20and%20Earn%20Rewards&body=Use%20my%20referral%20code%20{{ request.user.profile.referral_code }}%20to%20sign%20up%20and%20earn%20rewards!%20{{ request.build_absolute_uri }}" class="btn btn-outline-primary">
+            <a href="mailto:?subject=Join%20and%20Earn%20Rewards&body=Use%20my%20referral%20code%20{{ referral_code }}%20to%20sign%20up%20and%20earn%20rewards!%20{{ request.build_absolute_uri }}" class="btn btn-outline-primary">
                 <i class="bi bi-envelope"></i> Email
             </a>
             <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" class="btn btn-outline-primary">
                 <i class="bi bi-facebook"></i> Facebook
             </a>
-            <a href="https://twitter.com/intent/tweet?text=Use%20my%20referral%20code%20{{ request.user.profile.referral_code }}%20to%20sign%20up%20and%20earn%20rewards!%20{{ request.build_absolute_uri }}" target="_blank" class="btn btn-outline-primary">
+            <a href="https://twitter.com/intent/tweet?text=Use%20my%20referral%20code%20{{ referral_code }}%20to%20sign%20up%20and%20earn%20rewards!%20{{ request.build_absolute_uri }}" target="_blank" class="btn btn-outline-primary">
                 <i class="bi bi-twitter"></i> Twitter
             </a>
         </div>

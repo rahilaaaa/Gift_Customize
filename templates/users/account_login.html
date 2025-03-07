@@ -72,22 +72,26 @@
         {% include "users/scripts.html" %}
     {% endblock scripts %}
 
+
+
+    
+    
     <style>
         .custom-btn {
-            background-color: #D19C97;
+            background-color: #088178;
             color: #fff;
             border: none;
         }
     
         .custom-btn:hover {
-            background-color: #b88580;
+            background-color: #13afa5;
             color: #fff;
         }
     
         .custom-btn-light {
             background-color: #f8f9fa;
             color: #212529;
-            border: 1px solid #D19C97;
+            border: 1px solid#13afa5;
         }
     
         .custom-btn-light:hover {
@@ -104,7 +108,18 @@
         }
     </style>
 
-   
+    <script>
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
+    
+        window.onpageshow = function(event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        };
+    </script>
+    
 
 </body>
 

@@ -26,8 +26,16 @@ urlpatterns = [
     path('user_list/',views.userlist, name='user_list'),
     path('users/block/<int:user_id>/', views.block_user, name='block_user'),
     path('users/unblock/<int:user_id>/', views.unblock_user, name='unblock_user'),
-    path('', views.login, name='login'),
-    path('logout/', views.logout_view, name='logout_admin'),
+    path('', views.login_admin, name='login_admin'),
+    path('logout/', views.logout_admin, name='logout_admin'),
     path('product/edit/<int:product_id>/', views.edit_product, name='edit_product'),
     path('product/delete/<int:product_id>/', views.delete_product, name='delete_product'),
+    path('create-referral-offer/', views.create_referral_offer, name='create_referral_offer'),
+    path('edit-referral-offer/<int:offer_id>/', views.edit_referral_offer, name='edit_referral_offer'),
+    path('toggle-referral-offer/<int:offer_id>/', views.toggle_referral_offer, name='toggle_referral_offer'),
+    path('delete-referral-offer/<int:offer_id>/', views.delete_referral_offer, name='delete_referral_offer'),
+    path('export/excel/', views.export_orders_excel, name='export_orders_excel'),
+    path('export/pdf/', views.export_orders_pdf, name='export_orders_pdf'),
+    path('bestselling/',views.bestselling, name='bestselling')
+
 ]

@@ -33,17 +33,14 @@
                         {% csrf_token %}
                         
                         <div class="mb-3">
-                            {% comment %} <label class="form-label">Username</label> {% endcomment %}
                             <input class="form-control" placeholder="Your username" type="text" name="username" required>
                         </div>
 
                         <div class="mb-3">
-                            {% comment %} <label class="form-label">Email</label> {% endcomment %}
                             <input class="form-control" placeholder="Your email" type="email" name="email" required>
                         </div>
 
                         <div class="mb-3">
-                            {% comment %} <label class="form-label">Phone</label> {% endcomment %}
                             <div class="row gx-2">
                                 <div class="col-4">
                                     <input class="form-control" value="+91" type="text" name="country_code" readonly>
@@ -55,19 +52,22 @@
                         </div>
 
                         <div class="mb-3 position-relative">
-                            {% comment %} <label class="form-label">Password</label> {% endcomment %}
                             <input class="form-control" placeholder="Password" type="password" name="password" id="password" required>
                             <i class="far fa-eye position-absolute" id="togglePassword" style="right: 10px; top: 12px; cursor: pointer;"></i>
                         </div>
 
                         <div class="mb-3 position-relative">
-                            {% comment %} <label class="form-label">Confirm Password</label> {% endcomment %}
                             <input class="form-control" placeholder="Confirm Password" type="password" name="confirm_password" id="confirm_password" required>
                             <i class="far fa-eye position-absolute" id="toggleConfirmPassword" style="right: 10px; top: 12px; cursor: pointer;"></i>
                         </div>
 
+                        <!-- Referral Code (Optional) -->
+                        <div class="mb-3">
+                            <input class="form-control" placeholder="Referral Code (optional)" type="text" name="referral_code">
+                        </div>
+                        
                         <div class="mb-4">
-                            <button type="submit" class="btn w-100" style="background-color: #D19C97; border-color: #D19C97; color: white;">Verify Email</button>
+                            <button type="submit" class="btn w-100" style="background-color: #088178; border-color: #13afa5; color: white;">Verify Email</button>
                         </div>
                     </form>
                     <p class="text-center small text-muted mb-15">or</p>

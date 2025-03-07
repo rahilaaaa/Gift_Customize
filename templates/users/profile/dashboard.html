@@ -1,5 +1,5 @@
 <!-- filepath: /c:/Users/mashd/OneDrive/Desktop/Program/Gift Custimization/project/zyft/templates/users/profile/dashboard.html -->
-<div class="card border-secondary mb-4">
+{% comment %} <div class="card border-secondary mb-4">
     <div class="card-header bg-secondary text-white">
         <h4 class="m-0">Dashboard</h4>
     </div>
@@ -53,14 +53,51 @@
                     <div class="card-body">
                         <h5 class="card-title">Notifications</h5>
                         <ul class="list-group list-group-flush">
-                            <li class="list-group-item">Your order #1234 has been shipped.</li>
-                            <li class="list-group-item">New promotional offer available.</li>
-                            <li class="list-group-item">Your wallet balance is low.</li>
-                        </ul>
+                                <li class="list-group-item">Your order #1234 has been shipped.</li>
+                                <li class="list-group-item">New promotional offer available.</li>
+                                <li class="list-group-item">Your wallet balance is low.</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div> {% endcomment %}
+
+ 
+
+
+
+    
+<div class="card">
+    <div class="card-header bg-secondary text-white">
+        <h5>Account Details</h5>
+    </div>
+    <div class="card-body">
+        <p><a class="btn btn-primary" href="{% url 'edit_account' user.id %}">Edit Account</a></p>
+        <div class="user-card">
+            <div class="user-details mb-3">
+                <label><strong>Username:</strong></label>
+                <span id="username">{{ user.username }}</span>
+            </div>
+            <div class="user-details mb-3">
+                <label><strong>Email:</strong></label>
+                <span id="email">{{ user.email }}</span>
+            </div>
+            <div class="user-details mb-3">
+                <label><strong>Mobile:</strong></label>
+                <span id="mobile">{{ user.phone }}</span>
+            </div>
+        </div>
+
+        <div class="mb-3 text-end">
+            <p class="mt-4"><a class="" href="{% url 'change_password'  %}">Change Password</a></p>
+        </div>     
     </div>
 </div>
+
+
+
+
+
 

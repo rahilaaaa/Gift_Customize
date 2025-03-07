@@ -102,8 +102,23 @@
     <!-- Back to Top -->
     <a href="#" class="btn btn-primary back-to-top"><i class="fa fa-angle-double-up"></i></a>
 
-
+    <script>
+        (function() {
+            if (window.history.replaceState) {
+                window.history.replaceState(null, null, window.location.href);
+            }
+    
+            window.addEventListener("pageshow", function(event) {
+                if (event.persisted || window.performance && window.performance.navigation.type === 2) {
+                    window.location.reload();
+                }
+            });
+        })();
+    </script>
 
 </body>
+
+
+
 
 </html> 

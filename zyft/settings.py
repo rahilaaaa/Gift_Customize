@@ -13,6 +13,13 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 from decouple import config
+import environ
+from dotenv import load_dotenv
+import environ
+
+
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,9 +27,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+# Load environment variables
+load_dotenv()
+
+# Use the SECRET_KEY from .env
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-n1s^ilxlt7rr1ag@i4fohkf9ilba-$%k@@ag(!_xhf&78a%n%b'
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -41,6 +53,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_extensions',
     'users',
+    'chatbot',
     'products',
     'dashboard',
     'orders',
@@ -50,6 +63,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.facebook',
     'allauth.socialaccount.providers.google',
+    'paypal',
     
 ]
 
@@ -64,6 +78,7 @@ MIDDLEWARE = [
     # 'django.middleware.cache.UpdateCacheMiddleware',  # Add this middleware
     'django.contrib.auth.middleware.AuthenticationMiddleware',  # Required for allauth
     'django.contrib.messages.middleware.MessageMiddleware',
+    'products.middleware.NoCacheMiddleware',  
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
 
@@ -158,13 +173,27 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-EMAIL_BACKEND = config('EMAIL_BACKEND')
-EMAIL_HOST = config('EMAIL_HOST')
-EMAIL_PORT = config('EMAIL_PORT', cast=int)
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
+# Initialize environment variables
+env = environ.Env()
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_PORT = env.int("EMAIL_PORT")
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
+
+# EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend"
+# EMAIL_HOST="smtp.gmail.com"
+# EMAIL_PORT="587"
+# EMAIL_USE_TLS=True
+# EMAIL_HOST_USER="mkrahila117@gmail.com"
+# EMAIL_HOST_PASSWORD="eoiw ovxw znpr vzlu"
+# DEFAULT_FROM_EMAIL="mkrahila117@gmail.com"
+
+
 
 
 AUTH_USER_MODEL = 'users.Customer'
@@ -244,6 +273,16 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 
+PAYPAL_CLIENT_ID = config("PAYPAL_CLIENT_ID")
+PAYPAL_CLIENT_SECRET = config("PAYPAL_CLIENT_SECRET")
+PAYPAL_MODE = config("PAYPAL_MODE", default="sandbox")  # Defaults to sandbox if not set
+
+
+
+RAZORPAY_KEY_ID = config('RAZORPAY_KEY_ID')
+RAZORPAY_KEY_SECRET = config('RAZORPAY_KEY_SECRET')
+
+
 
 
 
@@ -254,4 +293,11 @@ LOGIN_URL = 'login/'
 
 SOCIALACCOUNT_LOGIN_ON_GET = True
 LOGIN_REDIRECT_URL = '/'
+
+# Initialize environment variables
+env = environ.Env()
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+
+# Set Google Application Credentials
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = env("GOOGLE_APPLICATION_CREDENTIALS")
 

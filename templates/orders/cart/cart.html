@@ -45,7 +45,7 @@
                                 <span class="product-title ms-2">{{ item.product.title }}</span>
                             </div>
                         </td>
-                        <td>${{ item.price |floatformat:0 }}</td>
+                        <td>₹{{ item.price |floatformat:0 }}</td>
                         {% comment %} <td>
                             {% if item.product.category.name == '3d_crystal' %}
                                 {{ item.variant.size }}
@@ -81,7 +81,7 @@
 
         {% if cart_items %}
         <div class="col-lg-4">
-            <form class="mb-5" action="{% url 'apply_coupon' %}" method="POST">
+            {% comment %} <form class="mb-5" action="{% url 'apply_coupon' %}" method="POST">
                 {% csrf_token %}
                 <div class="input-group">
                     <input type="text" name="coupon_code" class="form-control p-4" placeholder="Coupon Code">
@@ -97,8 +97,8 @@
                     </div>
                 </div>
                 {% endif %}
-            </form>
-
+            </form> {% endcomment %}
+{% comment %} 
             <div id="couponsSection" class="card border-secondary mb-5" style="display: none;">
                 <div class="card-header bg-secondary border-0">
                     <h4 class="font-weight-semi-bold m-0">Available Coupons</h4>
@@ -112,7 +112,7 @@
                         {% endfor %}
                     </ul>
                 </div>
-            </div>
+            </div> {% endcomment %}
 
             <div class="card border-secondary mb-5">
                 <div class="card-header bg-secondary border-0">
@@ -124,12 +124,12 @@
                         <h6 id="cartSubtotal"> ₹{{ subtotal|floatformat:0  }}</h6>
                     </div>
                     
-                    {% if request.session.coupon_discount %}
+                    {% comment %} {% if request.session.coupon_discount %}
                     <div class="d-flex justify-content-between mb-3">
                         <h6 class="font-weight-medium">Coupon Discount</h6>
                         <h6 class="text-success">- ₹{{ request.session.coupon_discount }}</h6>
                     </div>
-                    {% endif %}
+                    {% endif %} {% endcomment %}
                     
                     <div class="d-flex justify-content-between">
                         <h6 class="font-weight-medium">Shipping</h6>

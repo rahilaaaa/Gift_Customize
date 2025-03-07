@@ -18,9 +18,16 @@
     <div class="row justify-content-center">
         <div class="col-lg-12">
             <div class="card border-secondary mb-5">
-                <div class="card-header bg-secondary text-white">
+                <!-- Card Header with Invoice Button on the Right -->
+                <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Order Details</h5>
+                    <div class="invoice-header">
+                        <a href="{% url "generate_invoice"  order.id %}">
+                            <button class="btn btn-light btn-sm">Invoice <span>📥</span></button>
+                        </a>
+                    </div>
                 </div>
+                <!-- Card Body -->
                 <div class="card-body">
                     <div class="table-responsive-lg">
                         <table class="table table-bordered table-hover text-center table-sm align-middle">
@@ -34,21 +41,12 @@
                                     <th class="p-2">Total</th>
                                     <th class="p-2">Date</th>
                                     <th class="p-2">Status</th>
+                                    <th class="p-2">Return</th>
                                     <th class="p-2">Coupon</th>
                                     <th class="p-2">Discount</th>
-                                    <th class="p-2">Delivery</th>
+                                    <th class="p-2">Shipping</th>
                                     <th class="p-2">Payment</th>
                                     <th class="p-2">Address</th>
-                                   
-                                    {% comment %} {% for item in order.items.all %}
-                                        {% if item.product.category.name == 'wallet' %}
-                                            <th class="p-2">Color</th>
-                                        {% elif item.product.category.name == '3d_crystal' %}
-                                            <th class="p-2">Size</th>
-                                        {% elif item.product.category.name == 'bottle' %}
-                                            <th class="p-2">Liter</th>
-                                        {% endif %}
-                                    {% endfor %} {% endcomment %}
                                 </tr>
                             </thead>
                             <tbody>
@@ -67,13 +65,13 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="p-2 small">₹{{ item.price }}</td>
+                                        <td class="p-2 small">₹{{ item.price | floatformat:0}}</td>
                                         <td class="p-2 small">{{ item.quantity }}</td>
                                         {% if item.product.category.name == 'wallet' %}
                                         <td class="p-2 small">{{ item.variant.color }}</td>
-                                        {% elif item.product.category.name == '3d_crystal' %}
+                                        {% elif item.product.category.name == '3d crystal' %}
                                             <td class="p-2 small">{{ item.variant.size }}</td>
-                                        {% elif item.product.category.name == 'water_bottle' %}
+                                        {% elif item.product.category.name == 'water bottle' %}
                                             <td class="p-2 small">{{ item.variant.liter }}</td>
                                         {% endif %}
                                         <td class="p-2 small">
@@ -90,32 +88,82 @@
                                                 No Customization
                                             {% endif %}
                                         </td>
-                                        <td class="p-2 small">₹{{ item.get_total_price }}</td>
+                                        <td class="p-2 small">₹{{ item.get_total_price|floatformat:0 }}</td>
                                         <td class="p-2 small">{{ order.created_at|date:"M d, Y" }}</td>
                                         <td class="p-2 small">
                                             <span class="{% if order.status == 'cancelled' %}text-danger{% elif order.status == 'pending' %}text-warning{% else %}text-success{% endif %}">
                                                 {{ order.get_status_display }}
                                             </span>
                                         </td>
+                                        <td class="p-2 small">
+                                            {% if item.return_status %}
+                                                <span class="badge bg-warning">{{ item.get_return_status_display }}</span>
+                                            {% elif order.status == 'delivered' %}
+                                                <button type="button" class="text-danger border-0 bg-transparent p-0"
+                                                    style="text-decoration: underline; cursor: pointer;"
+                                                    onclick="confirmReturn('{{ item.id }}')">
+                                                    Return
+                                                </button>
+                                            {% else %}
+                                                <span class="text-muted">N/A</span>
+                                            {% endif %}
+                                        </td>
+                                        
                                         <td class="p-2 small">{% if item.coupon %}{{ item.coupon.code }}{% else %}No Coupon{% endif %}</td>
                                         <td class="p-2 small">₹{% if item.coupon %}{{ item.coupon.discount_value }}{% else %}0{% endif %}</td>
-                                        <td class="p-2 small">₹{{ order.shipping_cost }}</td>
+                                        <td class="p-2 small">₹{{ order.shipping_cost|floatformat:0 }}</td>
                                         <td class="p-2 small">{{ order.payment_method }}</td>
                                         <td class="p-2 small text-wrap" style="max-width: 180px;">
                                             <small>{{ order.shipping_address }}</small>
                                         </td>
-                                      
                                     </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
-                        <h6 class="text-end mt-4">Total: ₹{{ order.total_price }}</h6>
+                        <h6 class="text-end mt-4">Total: ₹{{ order.total_price|floatformat:0 }}</h6>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function confirmReturn(itemId) {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "Do you want to request a return for this item?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "Yes, Return it!",
+            cancelButtonText: "Cancel"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Create a form dynamically and submit
+                let form = document.createElement("form");
+                form.method = "POST";
+                form.action = ""; // Keep empty if the same page handles it
+
+                let csrfInput = document.createElement("input");
+                csrfInput.type = "hidden";
+                csrfInput.name = "csrfmiddlewaretoken";
+                csrfInput.value = "{{ csrf_token }}"; 
+
+                let itemInput = document.createElement("input");
+                itemInput.type = "hidden";
+                itemInput.name = "item_id";
+                itemInput.value = itemId;
+
+                form.appendChild(csrfInput);
+                form.appendChild(itemInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    }
+</script>
 
 {% include "products/script.html" %}
 

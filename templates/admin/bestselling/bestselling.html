@@ -1,0 +1,148 @@
+{% load static %}
+{% block head %}
+    {% include "admin/head.html" %}
+{% endblock head %}
+
+<style>
+    .card-product-grid {
+        transition: transform 0.3s ease-in-out;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    .card-product-grid:hover {
+        transform: scale(1.05);
+    }
+    .image-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px 10px 0 0;
+    }
+    .product-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+    .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .image-container:hover .overlay {
+        opacity: 1;
+    }
+    .info-wrap {
+        padding: 15px;
+        text-align: center;
+    }
+    .title {
+        font-size: 1rem;
+        font-weight: bold;
+        color: #333;
+        display: block;
+        margin-bottom: 10px;
+    }
+    .price {
+        font-size: 0.9rem;
+        color:#b1a1a1;
+    }
+    .revenue-label {
+        font-size: 0.9rem;
+        font-weight: bold;
+        color: #333;
+    }
+    .revenue-amount {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #28a745;
+    }
+    .top-categories h2 {
+        margin-top: 30px;
+        font-size: 1.8rem;
+        color: #333;
+        text-align: center;
+    }
+    .card-category-grid {
+        padding: 15px;
+        text-align: center;
+        background: #f8f9fa;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<body>
+    <div class="screen-overlay"></div>
+    {% block aside %} {% include 'admin/aside.html' %} {% endblock aside %}
+    {% block header %} {% include "admin/header.html" %} {% endblock header %}
+    
+    <main class="main-wrap">
+        <section class="content-main">
+            <div class="content-header text-center">
+                <h1>Best Selling Products</h1>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row gx-3 gy-4">
+                        {% for product in top_products %}
+                        <div class="col-sm-6 col-md-4 col-lg-3">
+                            <div class="card card-product-grid">
+                                <div class="image-container">
+                                    {% with product.images.first as first_image %}
+                                    {% if first_image %}
+                                        <img class="product-image" src="{{ first_image.image.url }}" alt="{{ product.title }}">
+                                    {% else %}
+                                        <img class="product-image" src="{% static 'admin/assets/imgs/theme/no-image.jpg' %}" alt="No image">
+                                    {% endif %}
+                                    {% endwith %}
+                                    <div class="overlay"><i class="material-icons md-zoom_in"></i></div>
+                                </div>
+                                <div class="info-wrap">
+                                    <a href="#" class="title text-truncate">{{ product.title }}</a>
+                                    <div class="price">Price: ₹{{ product.price | floatformat:0 }}</div>
+                                    <div class="revenue-label">Revenue: <span class="revenue-amount">₹{{ product.total_revenue|default:0|floatformat:0 }}</span></div>
+                                    <div class="text-muted">{{ product.total_sold|default:0 }} Sold</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <p class="text-center">No sales data available.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <section class="top-categories text-center">
+                <h2>Top Selling Categories</h2>
+                <div class="row justify-content-center gx-3 gy-4">
+                    {% for category in top_categories %}
+                    <div class="col-md-4 col-lg-3">
+                        <div class="card card-category-grid">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ category.name }}</h5>
+                                <div class="revenue-label">Revenue: <span class="revenue-amount">₹{{ category.total_revenue|default:0|floatformat:0 }}</span></div>
+                                <div class="text-muted">{{ category.total_sold|default:0 }} Sold</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12">
+                        <p>No category sales data available.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </section>
+    </main>
+</body>

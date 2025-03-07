@@ -8,17 +8,14 @@
 <body>       
     <div class="screen-overlay"></div>
    
-        
     {% block aside %}
         {% include 'admin/aside.html' %}
     {% endblock aside %}
 
     <main class="main-wrap">
-
-        
-    {% block header %}
-        {% include "admin/header.html" %}
-    {% endblock header %}
+        {% block header %}
+            {% include "admin/header.html" %}
+        {% endblock header %}
 
         <section class="content-main">
             <div class="content-header">
@@ -46,6 +43,11 @@
                                     <option value="shipped" {% if order.status == 'shipped' %}selected{% endif %}>Shipped</option>
                                     <option value="delivered" {% if order.status == 'delivered' %}selected{% endif %}>Delivered</option>
                                     <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                    <!-- New Statuses -->
+                                    <option value="return" {% if order.status == 'return' %}selected{% endif %}>Return</option>
+                                    <option value="return_cancelled" {% if order.status == 'return_cancelled' %}selected{% endif %}>Return Cancelled</option>
+                                    <option value="payment_failed" {% if order.status == 'payment_failed' %}selected{% endif %}>Payment Failed</option>
+                                    <option value="return_completed" {% if order.status == 'return_completed' %}selected{% endif %}>Return Completed</option>
                                 </select>
                                 <button type="submit" class="btn btn-primary">Save</button>
                             </form>
@@ -64,7 +66,6 @@
                                     <p class="mb-1">
                                         {{ order.customer.username }} <br> {{ order.customer.email }} <br> {{ order.customer.phone }}
                                     </p>
-                                    {% comment %} <a href="#">View profile</a> {% endcomment %}
                                 </div>
                             </article>
                         </div> <!-- col// -->
@@ -78,7 +79,6 @@
                                     <p class="mb-1">
                                         Shipping: {{ order.shipping_method }} <br> Pay method: {{ order.payment_method }} <br> Status: {{ order.status }}
                                     </p>
-                                    {% comment %} <a href="#">Download info</a> {% endcomment %}
                                 </div>
                             </article>
                         </div> <!-- col// -->
@@ -92,7 +92,6 @@
                                     <p class="mb-1">
                                         City: {{ order.shipping_address.city }}, {{ order.shipping_address.country }} <br>{{ order.shipping_address.street }} <br> {{ order.shipping_address.pincode }}
                                     </p>
-                                    {% comment %} <a href="#">View profile</a> {% endcomment %}
                                 </div>
                             </article>
                         </div> <!-- col// -->
@@ -108,6 +107,7 @@
                                             <th width="20%">Quantity</th>
                                             <th width="20%">Variant</th>
                                             <th width="40%">Customized Content</th>
+                                            <th width="20%">Return</th>
                                             <th width="20%" class="text-end">Total</th>
                                         </tr>
                                     </thead>
@@ -136,19 +136,33 @@
                                             {% else %}
                                                 <td>N/A</td>
                                             {% endif %}
+                                            <td>
+                                                {% if item.return_status == "return_requested" %}
+                                                <form method="post" action="{% url 'order_details' order.id %}">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                                                    <button type="submit" name="return_action" value="approve" class="badge rounded-pill alert-success">Approve</button>
+                                                    <button type="submit" name="return_action" value="reject" class="badge rounded-pill alert-danger">Reject</button>
+                                                </form>
+                                                {% elif item.return_status == "return_approved" %}
+                                                <span class="badge bg-success">Return Approved</span>
+                                                {% elif item.return_status == "return_rejected" %}
+                                                <span class="badge bg-danger">Return Rejected</span>
+                                                {% elif item.return_status == "return_completed" %}
+                                                <span class="badge bg-secondary">Return Completed</span>
+                                                {% endif %}
+                                            </td>
                                             <td class="text-end"> ${{ item.get_total_price }} </td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
                                 </table>
                             </div> <!-- table-responsive// -->
-                            {% comment %} <a class="btn btn-primary" href="page-orders-tracking.html">View Order Tracking</a> {% endcomment %}
                         </div> <!-- col// -->
                     </div>
                 </div> <!-- card-body end// -->
             </div> <!-- card end// -->
         </section> <!-- content-main end// -->
-      
     </main>
     <script src="assets/js/vendors/jquery-3.6.0.min.js"></script>
     <script src="assets/js/vendors/bootstrap.bundle.min.js"></script>
@@ -158,5 +172,4 @@
     <!-- Main Script -->
     <script src="assets/js/main.js" type="text/javascript"></script>
 </body>
-
 </html>

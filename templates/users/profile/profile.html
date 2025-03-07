@@ -1,226 +1,215 @@
 {% load static %}
 
-{% block head %}
-    {% include "products/head.html" %}
-{% endblock head %}
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% block head %}
+        {% include "products/head.html" %}
+    {% endblock head %}
+</head>
 <body>
 
-{% block topbar %}
-    {% include "products/topbar.html" %}
-{% endblock topbar %}
+    {% block topbar %}
+        {% include "products/topbar.html" %}
+    {% endblock topbar %}
 
-{% block navbar %}
-    {% include "products/navbar.html" %}
-{% endblock navbar %}
+    {% block navbar %}
+        {% include "products/navbar.html" %}
+    {% endblock navbar %}
 
-<div class="container-fluid py-5">
-    <div class="row">
-        <!-- Sidebar Menu -->
-        <div class="col-md-3">
-            <div class="card border-secondary mb-4">
-                <div class="card-header bg-secondary text-white">
-                    <h4 class="m-0">Dashboard Menu</h4>
-                </div>
-                <div class="list-group list-group-flush">
-                    <a href="#" class="list-group-item list-group-item-action menu-link" id="dashboard-link">
-                        <i class="bi bi-speedometer2"></i> Dashboard
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action menu-link" id="my-order-link">
-                        <i class="bi bi-bag"></i> Orders
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action menu-link" id="wallet-link">
-                        <i class="bi bi-wallet2"></i> Wallet
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action menu-link" id="my-address-link">
-                        <i class="bi bi-geo-alt"></i> My Address
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action menu-link" id="my-account-link">
-                        <i class="bi bi-person-circle"></i> Account Details
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action menu-link" id="referral-link">
-                        <i class="bi bi-person-plus"></i> Referral
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action menu-link" id="transaction-link">
-                        <i class="bi bi-cash-stack"></i> Transaction
-                    </a>
-                    <a href="{% url 'logout' %}" class="list-group-item list-group-item-action text-danger">
-                        <i class="bi bi-box-arrow-right"></i> Logout
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Profile Content -->
-        <div class="col-md-9">
-            <div id="address-list-content" style="display: none;">
-                {% include "users/profile/address/address_list.html" %}
-            </div>
-            <div id="orders-list-content" style="display: none;">
-                {% include "users/profile/orders/orders_list.html" %}
-            </div>
-            <div id="dashboard-content" style="display: none;">
-                {% include "users/profile/dashboard.html" %}
-            </div>
-            <div id="wallet-content" style="display: none;">
-                {% include "users/profile/wallet.html" %}
-            </div>
-            <div id="account-details-content" style="display: none;">
-                {% include "users/profile/account/account_details.html" %}
-            </div>
-            <div id="referral-content" style="display: none;">
-                {% include "users/profile/referrel/referal.html" %}
-            </div>
-            <div id="transaction-content" style="display: none;">
-                {% include "users/profile/transaction/transaction.html" %}
-            </div>
-            <div id="default-profile-content">
+    <div class="container-fluid py-5">
+        <div class="row">
+            <!-- Sidebar Menu -->
+            <div class="col-md-3">
                 <div class="card border-secondary mb-4">
                     <div class="card-header bg-secondary text-white">
-                        <h4 class="m-0">Hello {{ request.user.username }}!</h4>
+                        <h4 class="m-0">Dashboard Menu</h4>
                     </div>
-                    <div class="card-body">
-                        <p>From your account dashboard, you can view your <strong>orders</strong>, manage <strong>addresses</strong>, and update your <strong>account details</strong>.</p>
-                        <a href="#" class="btn btn-primary">Update Profile</a>
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action menu-link" id="dashboard-link">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action menu-link" id="my-order-link">
+                            <i class="bi bi-bag"></i> Orders
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action menu-link" id="wallet-link">
+                            <i class="bi bi-wallet2"></i> Wallet
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action menu-link" id="my-address-link">
+                            <i class="bi bi-geo-alt"></i> My Address
+                        </a>
+                         {% comment %} <a href="#" class="list-group-item list-group-item-action menu-link" id="my-account-link">
+                            <i class="bi bi-person-circle"></i> Account Details
+                        </a> 
+                         <a href="#" class="list-group-item list-group-item-action menu-link" id="referral-link">
+                            <i class="bi bi-person-plus"></i> Referral
+                        </a> 
+                         <a href="#" class="list-group-item list-group-item-action menu-link" id="transaction-link">
+                            <i class="bi bi-cash-stack"></i> Transaction {% endcomment %}
+                        </a> 
+                        <a href="{% url 'logout_user' %}" class="list-group-item list-group-item-action text-danger">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Content -->
+            <div class="col-md-9">
+                <div id="address-list-content" style="display: none;">
+                    {% include "users/profile/address/address_list.html" %}
+                </div>
+                <div id="orders-list-content" style="display: none;">
+                    {% include "users/profile/orders/orders_list.html" %}
+                </div>
+                <div id="dashboard-content" style="display: none;">
+                    {% include "users/profile/dashboard.html" %}
+                </div>
+                <div id="wallet-content" style="display: none;">
+                    {% include "users/profile/wallet.html" %}
+                </div>
+                <div id="account-details-content" style="display: none;">
+                   {% include "users/profile/account/account_details.html" %} 
+               
+                
+                </div>
+                <div id="referral-content" style="display: none;">
+                    {% include "users/profile/referrel/referal.html" %}
+                </div>
+                <div id="transaction-content" style="display: none;">
+                    {% include "users/profile/transaction/transaction.html" %}
+                </div>
+                <div id="default-profile-content">
+                    <div class="card border-secondary mb-4">
+                        {% comment %} <div class="card-header bg-secondary text-white">
+                            <h4 class="m-0">Hello {{ request.user.username }}!</h4>
+                        </div> {% endcomment %}
+                        <div class="card-body">
+                            <div class="card">
+                                <div class="card-header bg-secondary text-white">
+                                    <h5>Account Details</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p><a class="btn btn-primary" href="{% url 'edit_account' user.id %}">Edit Account</a></p>
+                                    <div class="user-card">
+                                        <div class="user-details mb-3">
+                                            <label><strong>Username:</strong></label>
+                                            <span id="username">{{ user.username }}</span>
+                                        </div>
+                                        <div class="user-details mb-3">
+                                            <label><strong>Email:</strong></label>
+                                            <span id="email">{{ user.email }}</span>
+                                        </div>
+                                        <div class="user-details mb-3">
+                                            <label><strong>Mobile:</strong></label>
+                                            <span id="mobile">{{ user.phone }}</span>
+                                        </div>
+                                    </div>
+                            
+                                    <div class="mb-3 text-end">
+                                        <p class="mt-4"><a class="" href="{% url 'change_password'  %}">Change Password</a></p>
+                                    </div>     
+                                </div>
+                            </div>
+                            
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<script>
-    document.getElementById('my-address-link').addEventListener('click', function(event) {
-        event.preventDefault();
-        document.getElementById('default-profile-content').style.display = 'none';
-        document.getElementById('orders-list-content').style.display = 'none';
-        document.getElementById('dashboard-content').style.display = 'none';
-        document.getElementById('wallet-content').style.display = 'none';
-        document.getElementById('account-details-content').style.display = 'none';
-        document.getElementById('referral-content').style.display = 'none';
-        document.getElementById('transaction-content').style.display = 'none';
-        document.getElementById('address-list-content').style.display = 'block';
-    });
-
-    document.getElementById('my-order-link').addEventListener('click', function(event) {
-        event.preventDefault();
-        document.getElementById('default-profile-content').style.display = 'none';
-        document.getElementById('address-list-content').style.display = 'none';
-        document.getElementById('dashboard-content').style.display = 'none';
-        document.getElementById('wallet-content').style.display = 'none';
-        document.getElementById('account-details-content').style.display = 'none';
-        document.getElementById('referral-content').style.display = 'none';
-        document.getElementById('transaction-content').style.display = 'none';
-        document.getElementById('orders-list-content').style.display = 'block';
-    });
-
-    document.getElementById('dashboard-link').addEventListener('click', function(event) {
-        event.preventDefault();
-        document.getElementById('default-profile-content').style.display = 'none';
-        document.getElementById('address-list-content').style.display = 'none';
-        document.getElementById('orders-list-content').style.display = 'none';
-        document.getElementById('wallet-content').style.display = 'none';
-        document.getElementById('account-details-content').style.display = 'none';
-        document.getElementById('referral-content').style.display = 'none';
-        document.getElementById('transaction-content').style.display = 'none';
-        document.getElementById('dashboard-content').style.display = 'block';
-    });
-
-    document.getElementById('wallet-link').addEventListener('click', function(event) {
-        event.preventDefault();
-        document.getElementById('default-profile-content').style.display = 'none';
-        document.getElementById('address-list-content').style.display = 'none';
-        document.getElementById('orders-list-content').style.display = 'none';
-        document.getElementById('dashboard-content').style.display = 'none';
-        document.getElementById('account-details-content').style.display = 'none';
-        document.getElementById('referral-content').style.display = 'none';
-        document.getElementById('transaction-content').style.display = 'none';
-        document.getElementById('wallet-content').style.display = 'block';
-    });
-
-    document.getElementById('view-wallet-button').addEventListener('click', function(event) {
-        event.preventDefault();
-        document.getElementById('default-profile-content').style.display = 'none';
-        document.getElementById('address-list-content').style.display = 'none';
-        document.getElementById('orders-list-content').style.display = 'none';
-        document.getElementById('dashboard-content').style.display = 'none';
-        document.getElementById('account-details-content').style.display = 'none';
-        document.getElementById('referral-content').style.display = 'none';
-        document.getElementById('transaction-content').style.display = 'none';
-        document.getElementById('wallet-content').style.display = 'block';
-    });
-
-    document.getElementById('view-orders-button').addEventListener('click', function(event) {
-        event.preventDefault();
-        document.getElementById('default-profile-content').style.display = 'none';
-        document.getElementById('address-list-content').style.display = 'none';
-        document.getElementById('wallet-content').style.display = 'none';
-        document.getElementById('dashboard-content').style.display = 'none';
-        document.getElementById('account-details-content').style.display = 'none';
-        document.getElementById('referral-content').style.display = 'none';
-        document.getElementById('transaction-content').style.display = 'none';
-        document.getElementById('orders-list-content').style.display = 'block';
-    });
-
-    document.getElementById('view-account-button').addEventListener('click', function(event) {
-        event.preventDefault();
-        document.getElementById('default-profile-content').style.display = 'none';
-        document.getElementById('address-list-content').style.display = 'none';
-        document.getElementById('wallet-content').style.display = 'none';
-        document.getElementById('dashboard-content').style.display = 'none';
-        document.getElementById('orders-list-content').style.display = 'none';
-        document.getElementById('referral-content').style.display = 'none';
-        document.getElementById('transaction-content').style.display = 'none';
-        document.getElementById('account-details-content').style.display = 'block';
-    });
-
-    document.getElementById('my-account-link').addEventListener('click', function(event) {
-        event.preventDefault();
-        document.getElementById('default-profile-content').style.display = 'none';
-        document.getElementById('address-list-content').style.display = 'none';
-        document.getElementById('orders-list-content').style.display = 'none';
-        document.getElementById('wallet-content').style.display = 'none';
-        document.getElementById('dashboard-content').style.display = 'none';
-        document.getElementById('referral-content').style.display = 'none';
-        document.getElementById('transaction-content').style.display = 'none';
-        document.getElementById('account-details-content').style.display = 'block';
-    });
-
-    document.getElementById('referral-link').addEventListener('click', function(event) {
-        event.preventDefault();
-        document.getElementById('default-profile-content').style.display = 'none';
-        document.getElementById('address-list-content').style.display = 'none';
-        document.getElementById('orders-list-content').style.display = 'none';
-        document.getElementById('wallet-content').style.display = 'none';
-        document.getElementById('dashboard-content').style.display = 'none';
-        document.getElementById('account-details-content').style.display = 'none';
-        document.getElementById('transaction-content').style.display = 'none';
-        document.getElementById('referral-content').style.display = 'block';
-    });
-
-    document.getElementById('transaction-link').addEventListener('click', function(event) {
-        event.preventDefault();
-        document.getElementById('default-profile-content').style.display = 'none';
-        document.getElementById('address-list-content').style.display = 'none';
-        document.getElementById('orders-list-content').style.display = 'none';
-        document.getElementById('wallet-content').style.display = 'none';
-        document.getElementById('dashboard-content').style.display = 'none';
-        document.getElementById('account-details-content').style.display = 'none';
-        document.getElementById('referral-content').style.display = 'none';
-        document.getElementById('transaction-content').style.display = 'block';
-    });
-
-    // Add active class to the selected menu link
-    const menuLinks = document.querySelectorAll('.menu-link');
-    menuLinks.forEach(link => {
-        link.addEventListener('click', function() {
-            menuLinks.forEach(link => link.classList.remove('active'));
-            this.classList.add('active');
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Function to hide all content divs
+            function hideAllContent() {
+                document.getElementById('default-profile-content').style.display = 'none';
+                document.getElementById('address-list-content').style.display = 'none';
+                document.getElementById('orders-list-content').style.display = 'none';
+                document.getElementById('dashboard-content').style.display = 'none';
+                document.getElementById('wallet-content').style.display = 'none';
+                document.getElementById('account-details-content').style.display = 'none';
+                document.getElementById('referral-content').style.display = 'block';
+                document.getElementById('transaction-content').style.display = 'none';
+            }
+    
+            function showSection(sectionId) {
+                hideAllContent();
+                console.log("Showing section:", sectionId);  // Debugging log
+            
+                let section = document.getElementById(sectionId);
+                if (section) {
+                    section.style.display = 'block';
+                } else {
+                    console.error("Section not found:", sectionId);
+                }
+            }
+            
+            // Sidebar menu navigation
+            document.getElementById('my-address-link').addEventListener('click', function(event) {
+                event.preventDefault();
+                showSection('address-list-content');
+            });
+    
+            document.getElementById('my-order-link').addEventListener('click', function(event) {
+                event.preventDefault();
+                showSection('orders-list-content');
+            });
+    
+            document.getElementById('dashboard-link').addEventListener('click', function(event) {
+                event.preventDefault();
+                showSection('dashboard-content');
+            });
+    
+            document.getElementById('wallet-link').addEventListener('click', function(event) {
+                event.preventDefault();
+                showSection('wallet-content');
+            });
+    
+            document.getElementById('my-account-link').addEventListener('click', function(event) {
+                event.preventDefault();
+                showSection('account-details-content');
+            });
+            
+            document.getElementById('referral-link').addEventListener('click', function(event) {
+                event.preventDefault();
+                showSection('referral-content');
+            });
+            
+            document.getElementById('transaction-link').addEventListener('click', function(event) {
+                event.preventDefault();
+                showSection('transaction-content');
+            });
+            
+    
+            // Dashboard buttons navigation
+            document.getElementById('view-orders-button').addEventListener('click', function(event) {
+                event.preventDefault();
+                showSection('orders-list-content');
+            });
+    
+            document.getElementById('view-wallet-button').addEventListener('click', function(event) {
+                event.preventDefault();
+                showSection('wallet-content');
+            });
+    
+            document.getElementById('view-account-button').addEventListener('click', function(event) {
+                event.preventDefault();
+                showSection('account-details-content');
+            });
+    
+            // Add active class to the selected menu link
+            const menuLinks = document.querySelectorAll('.menu-link');
+            menuLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    menuLinks.forEach(link => link.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
         });
-    });
-</script>
-
-{% include "products/script.html" %}
+    </script>
+   
+ 
 
 </body>
 </html>

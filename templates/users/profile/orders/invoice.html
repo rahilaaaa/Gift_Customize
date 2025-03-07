@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .card {
+            margin: 20px auto;
+            max-width: 800px;
+            background-color: #fff;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .table {
+            margin-top: 20px;
+        }
+        .badge {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        .badge-info {
+            background-color: #17a2b8;
+        }
+        .badge-warning {
+            background-color: #ffc107;
+        }
+        /* Hide elements during PDF export */
+        .pdf-export #download-btn,
+        .pdf-export #back-btn {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="card">
+            <!-- Card Header -->
+            <div class="card-header">
+                <h3 class="mb-0">Invoice</h3>
+                <button class="btn btn-primary btn-sm" id="download-btn">
+                    Download PDF
+                </button>
+            </div>
+
+          <!-- Card Body -->
+          <div class="card-body">
+            <h5 class="card-title">Order ID: {{ order.id }}</h5>
+            <p class="card-text">Order Date: {{ order.created_at|date:"D M d, Y" }}</p>
+            <div class="intro">
+                Hi <strong>{{ order.customer.username }}</strong>,
+                <br>
+                This is the receipt for a payment of <strong>₹{{ order.total_price }}</strong> (INR) for your order.
+            </div><br>
+
+            <!-- Payment Details -->
+            <div class="payment-details">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <p class="card-text"><strong>Shipping Address:</strong></p>
+                        <address>
+                            {{ order.shipping_address.street }}<br>
+                            {{ order.shipping_address.city }}, {{ order.shipping_address.state }}<br>
+                            {{ order.shipping_address.country }}<br>
+                            Pin: {{ order.shipping_address.pincode }}<br>
+                            Mobile No: {{ order.shipping_address.phone }}<br>
+                            Email: {{ order.customer.email }}
+                        </address>
+                        <p class="card-text">Order Status: <span class="badge badge-info">{{ order.get_status_display }}</span></p>
+                        <p class="card-text">Payment Status: <span class="badge badge-warning">{{ order.payment_status }}</span></p>
+                    </div>
+                    <div class="col-sm-6 text-end">
+                        <br>
+                        <span>Payment To,</span><br>
+                        <strong>Zyft Pvt.Ltd</strong>
+                        <p>
+                            26, HAL Old Airport Rd<br>
+                            HSR Layout, 560008<br>
+                            Bengaluru<br>
+                            Karnataka, India<br>
+                            <a href="#">Zyft786@gmail.com</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Table -->
+            <h3 class="mt-4">Products:</h3>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th scope="col">Product Name</th>
+                            <th>Varient</th>
+                            <th scope="col">Quantity</th>
+                            <th scope="col">Price</th>
+                            <th scope="col">Shipping Charge</th>
+                            <th scope="col">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order_items %}
+                        <tr>
+                            <td>{{ item.product.title }}</td> 
+                            {% if item.product.category.name == '3d crystal' %}
+                            <td>{{ item.variant.size }}</td>
+                            {% elif item.product.category.name == 'wallet' %}
+                            <td>{{ item.variant.color }}</td>
+                            {% elif item.product.category.name == 'water bottle' %}
+                            <td>{{ item.variant.liter }}</td>
+                            {% endif %}
+                            <td>{{ item.quantity }}</td>
+                            <td>₹{{ item.price }}</td>
+                            <td>₹{{ order.shipping_cost }}</td>
+                            <td>₹{{ item.get_total_price }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Total Amount -->
+            <h3 class="mt-4">Total Amount: ₹{{ order.total_price }}</h3>
+        </div>
+            <!-- Card Footer -->
+            <div class="card-footer text-end bg-transparent">
+                <a href="{% url 'order_detail' order.id %}" class="btn btn-outline-secondary" id="back-btn">
+                    Back to Order
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF Generation Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const downloadBtn = document.getElementById('download-btn');
+            
+            downloadBtn.addEventListener('click', async () => {
+                const { jsPDF } = window.jspdf;
+                
+                // Prepare PDF export
+                document.body.classList.add('pdf-export');
+                const originalCard = document.querySelector('.card');
+                const clonedCard = originalCard.cloneNode(true);
+                
+                // Clean cloned content
+                clonedCard.querySelector('#download-btn')?.remove();
+                clonedCard.querySelector('#back-btn')?.remove();
+                clonedCard.style.boxShadow = 'none';
+                clonedCard.style.position = 'fixed';
+                clonedCard.style.left = '-9999px';
+                document.body.appendChild(clonedCard);
+
+                // Generate PDF
+                try {
+                    const canvas = await html2canvas(clonedCard, {
+                        scale: 1,
+                        logging: true,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: null
+                    });
+
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const pageWidth = pdf.internal.pageSize.getWidth() - 20;
+                    const pageHeight = (canvas.height * pageWidth) / canvas.width;
+
+                    pdf.addImage(canvas, 'JPEG', 10, 10, pageWidth, pageHeight);
+                    pdf.save(`invoice-{{ order.id }}.pdf`);
+                } catch (error) {
+                    console.error('PDF generation failed:', error);
+                } finally {
+                    document.body.removeChild(clonedCard);
+                    document.body.classList.remove('pdf-export');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

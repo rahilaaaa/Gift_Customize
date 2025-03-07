@@ -80,7 +80,7 @@
                                         {% endif %}
                                         <div class="col-md-6 mb-3">
                                             <label for="product_quantity{{ forloop.counter }}" class="form-label">Quantity {{ forloop.counter }}</label>
-                                            <input type="number" class="form-control" id="product_quantity{{ forloop.counter }}" name="quantity{{ forloop.counter }}" value="{{ variant.quantity }}">
+                                            <input type="number" class="form-control" id="product_quantity{{ forloop.counter }}" name="quantity{{ forloop.counter }}" value="{{ variant.quantity }}" required >
                                         </div>
                                     </div>
                                     {% endfor %}

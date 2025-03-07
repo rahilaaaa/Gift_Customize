@@ -1,8 +1,6 @@
 <!-- users/profile/address_list.html -->
 <div class="card border-secondary mb-4">
 
-     
-
     <div class="card-header bg-secondary text-white">
         <h4 class="m-0">Your Addresses</h4>
     </div>
@@ -16,13 +14,13 @@
             {% for address in addresses %}
             <div class="col-md-6">
                 <div class="card border-primary mb-3">
-                    <div class="card-body">
+                    <div class="card-body position-relative">
                         <h5 class="card-title"><strong>{{ address.name }}</strong></h5>
                         <p>{{ address.street }}<br>{{ address.city }}, {{ address.state }}, {{ address.country }}</p>
                         <p><strong>Pin:</strong> {{ address.pincode }}</p>
                         <p><strong>Mobile:</strong> {{ address.mobile }}</p>
-                        <a href="{% url 'edit_address' address.id %}" class="btn btn-warning btn-sm">Edit</a>
-                        <a href="{% url 'delete_address' address.id %}" class="btn btn-danger btn-sm">Remove</a>
+                        <a href="{% url 'edit_address' address.id %}" >Edit</a>
+                        <a href="{% url 'delete_address' address.id %}" class="position-absolute bottom-0 end-0 mb-2 me-3 text-danger">Remove</a>
                     </div>
                 </div>
             </div>
@@ -39,7 +37,6 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="addAddressModalLabel">Add New Address</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form method="POST">

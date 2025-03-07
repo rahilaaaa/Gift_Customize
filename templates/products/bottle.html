@@ -55,10 +55,10 @@
             <!-- Price Section -->
             <h3>
                 {% if discounted_price %}
-                <span style="text-decoration: line-through; color: #999; font-size: 0.7em;"> ₹{{ product.price }}</span>
-                <span style="color: #D19C97;"> ₹{{ discounted_price|floatformat:2 }}</span>
+                <span style="text-decoration: line-through; color: #999; font-size: 0.7em;"> ₹{{ product.price|floatformat:0 }}</span>
+                <span style="color: #088178;"> ₹{{ discounted_price|floatformat:0 }}</span>
                 {% else %}
-                <span style="color:#D19C97;"> ₹{{ product.price }}</span>
+                <span style="color: #088178"> ₹{{ product.price|floatformat:0}}</span>
                 {% endif %}
             </h3>
             <p>{{ product.description }}</p>
@@ -171,7 +171,7 @@
         // Update the availability message
         if (quantity > 0) {
             availabilityMessage.textContent = `Only ${quantity} items left in stock`; // Use backticks for template literals
-            availabilityMessage.style.color = '#D19C97';
+            availabilityMessage.style.color = '#088178 ';
             quantitySection.style.display = 'flex';
             addToCartButton.disabled = false;
         } else {

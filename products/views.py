@@ -8,36 +8,39 @@ from django.views.decorators.cache import cache_control,never_cache
 from django.db.models import Avg
 from django.contrib.contenttypes.models import ContentType
 from .models import Offer
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import cache_control, never_cache
+from users.decorators import user_required
 
 
-@cache_control(no_cache=True, no_store=True, must_revalidate=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+@login_required(login_url='login_user')
 def home(request):
-    # Fetch products with 'high' priority
     high_priority_products = Product.objects.filter(priority='high').order_by('-id')
     products_with_images, page_obj = get_paginated_products(request, high_priority_products, per_page=8)
-    
-    # Calculate cart count
+
+    cart_count = 0
+    wishlist_count = 0
+
     if request.user.is_authenticated:
         cart = Cart.objects.filter(customer=request.user).first()
         cart_count = cart.items.count() if cart else 0
         wishlist = Wishlist.objects.filter(user=request.user).first()
         wishlist_count = wishlist.items.count() if wishlist else 0
 
-    else:
-        cart_count = 0
-        wishlist_count = 0
-
-
-    return render(request, 'products/home.html', {
+    response = render(request, 'products/home.html', {
         'products_with_images': products_with_images,
         'page_obj': page_obj,
-        'username': request.user.username,  # Add username to context
-        'cart_count': cart_count,  # Add cart count to context
-        'wishlist_count': wishlist_count,  # Add wishlist count to context
-
+        'username': request.user.username,
+        'cart_count': cart_count,
+        'wishlist_count': wishlist_count,
     })
 
-
+    response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    
+    return response
 
 
 def product_details(request, pk):

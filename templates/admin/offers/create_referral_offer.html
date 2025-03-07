@@ -1,0 +1,104 @@
+{% block head %}
+    {% include "admin/head.html" %}
+{% endblock head %}
+
+<body>       
+    <div class="screen-overlay"></div>
+   
+        
+    {% block aside %}
+        {% include 'admin/aside.html' %}
+    {% endblock aside %}
+
+    <main class="main-wrap">
+
+        
+    {% block header %}
+        {% include "admin/header.html" %}
+    {% endblock header %}
+
+    <section class="content-main">
+        <div class="content-header">
+            <div>
+                <h2 class="content-title card-title">Create Referral Offer</h2>
+            </div>
+            <div>
+                <a href="{% url 'offers' %}" class="btn btn-secondary btn-sm rounded">Back to Offers</a>
+            </div>
+        </div>
+    
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-4">
+                                        <label for="offer_name" class="form-label">Offer Name</label>
+                                        <input type="text" class="form-control" id="offer_name" name="offer_name" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-4">
+                                        <label class="form-label">Status</label>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" role="switch" id="is_active" name="is_active" checked>
+                                            <label class="form-check-label" for="is_active">Active</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+    
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-4">
+                                        <label for="referrer_reward" class="form-label">Referrer Reward (₹)</label>
+                                        <input type="number" class="form-control" id="referrer_reward" name="referrer_reward" 
+                                               step="0.01" min="0" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-4">
+                                        <label for="referred_reward" class="form-label">Referred Reward (₹)</label>
+                                        <input type="number" class="form-control" id="referred_reward" name="referred_reward" 
+                                               step="0.01" min="0" required>
+                                    </div>
+                                </div>
+                            </div>
+    
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-4">
+                                        <label for="start_date" class="form-label">Start Date</label>
+                                        <input type="datetime-local" class="form-control" id="start_date" name="start_date" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-4">
+                                        <label for="end_date" class="form-label">End Date (Optional)</label>
+                                        <input type="datetime-local" class="form-control" id="end_date" name="end_date">
+                                    </div>
+                                </div>
+                            </div>
+    
+                            <div class="mb-4">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                            </div>
+    
+                            <div class="d-grid gap-3">
+                                <button type="submit" class="btn btn-primary">Create Offer</button>
+                                <a href="{% url 'offers' %}" class="btn btn-secondary">Cancel</a>
+                            </div>
+                        </form>
+                    </div> <!-- .col// -->
+                </div> <!-- .row // -->
+            </div> <!-- card body .// -->
+        </div> <!-- card .// -->
+    </section>

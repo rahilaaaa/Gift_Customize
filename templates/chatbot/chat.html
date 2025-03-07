@@ -21,131 +21,101 @@
         {% include "products/navbar.html" %}
 {% endblock navbar %}
 
-<div class="container-fluid pt-5">
-    {% comment %} <div class="text-center mb-4">
-        <h2 class="section-title px-5"><span class="px-2">Want to chat now?</span></h2>
-    </div> {% endcomment %}
-    <div class="row justify-content-center px-xl-5">
-        <div id="chatbot-container">
-            <div id="chatbot-header">
-                <span>Want to chat now?</span>
-            </div>
-            <div id="chatbot-body">
-                <div id="chatbot-messages"></div>
-                <input type="text" id="chatbot-input" placeholder="Type a message...">
-                <button id="chatbot-send">Send</button>
-            </div>
-        </div>
+<div class="container mt-4">
+    <h2 class="text-center">Chat with Our Support Bot</h2>
+    
+    <div class="chat-box border p-3 mb-3 rounded shadow-sm" 
+         style="height: 500px; overflow-y: auto; background: #f8f9fa; display: flex; flex-direction: column;">
+        
+        {% for chat in chats %}
+            {% if chat.role == "user" %}
+                <div class="d-flex justify-content-end mb-2">
+                    <div class="p-2 rounded bg-primary text-white" style="max-width: 70%;">
+                        <strong>You:</strong> {{ chat.message }}
+                    </div>
+                </div>
+            {% else %}
+                <div class="d-flex justify-content-start mb-2">
+                    <div class="p-2 rounded bg-light text-dark" style="max-width: 70%;">
+                        <strong>Bot:</strong> {{ chat.message }}
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
     </div>
+
+    <div class="input-group">
+        <input type="text" id="chat-input" class="form-control" placeholder="Type your message..." autofocus>
+        <button class="btn btn-primary" id="send-btn"><i class="bi bi-send"></i> Send</button>
+    </div>
+    <p id="loading" style="display:none; color: gray;" class="text-center mt-2">Bot is typing...</p>
 </div>
 
-<!-- Styles -->
-<style>
-    #chatbot-container {
-        width: 100%;
-        max-width: 800px; /* Increased width */
-        height: 600px; /* Increased height */
-        background: white;
-        border: 1px solid #ddd;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        border-radius: 10px;
-        display: flex;
-        flex-direction: column;
-        margin-top: 20px;
-    }
-    #chatbot-header {
-        background: #D19C97;
-        color: white;
-        padding: 20px; /* Increased padding */
-        text-align: center;
-        font-size: 20px; /* Larger font */
-        font-weight: bold;
-        border-radius: 10px 10px 0 0;
-    }
-    #chatbot-body {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        padding: 20px; /* Increased padding */
-    }
-    #chatbot-messages {
-        flex: 1;
-        overflow-y: auto;
-        border-bottom: 1px solid #ddd;
-        padding-bottom: 15px;
-        font-size: 16px; /* Larger text */
-    }
-    #chatbot-input {
-        width: 100%;
-        padding: 12px; /* Larger padding */
-        font-size: 16px; /* Larger font */
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        margin-top: 15px;
-    }
-    #chatbot-send {
-        width: 100%;
-        margin-top: 10px;
-        padding: 12px; /* Increased size */
-        font-size: 16px; /* Larger text */
-        background: #D19C97;
-        color: white;
-        border: none;
-        cursor: pointer;
-        border-radius: 5px;
-    }
-</style>
-
 <script>
-    document.getElementById('chatbot-send').addEventListener('click', function() {
-        let inputField = document.getElementById('chatbot-input');
-        let message = inputField.value.trim();
+    document.getElementById("send-btn").addEventListener("click", function() {
+        let messageInput = document.getElementById("chat-input");
+        let chatBox = document.querySelector(".chat-box");
+        let loadingIndicator = document.getElementById("loading");
 
-        if (message) {
-            let chatMessages = document.getElementById('chatbot-messages');
-            
-            // Append user message
-            let userMessage = document.createElement('div');
-            userMessage.textContent = "You: " + message;
-            chatMessages.appendChild(userMessage);
-            
-            // Send message to backend
-            fetch('/chat/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({ message: message })
-            })
-            .then(response => response.json())
-            .then(data => {
-                let botMessage = document.createElement('div');
-                botMessage.textContent = "Bot: " + data.response;
-                chatMessages.appendChild(botMessage);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            });
+        let message = messageInput.value.trim();
+        if (message === "") return;
 
-            inputField.value = '';
-        }
+        // Append user message
+        let userMessage = `<div class="d-flex justify-content-end mb-2">
+                              <div class="p-2 rounded bg-primary text-white" style="max-width: 70%;">
+                                  <strong>You:</strong> ${message}
+                              </div>
+                           </div>`;
+        chatBox.innerHTML += userMessage;
+        messageInput.value = "";
+        chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll
+
+        // Show loading indicator
+        loadingIndicator.style.display = "block";   
+
+        fetch("{% url 'chatbot_view' %}", {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json", 
+                "X-CSRFToken": "{{ csrf_token }}" 
+            },
+            body: JSON.stringify({ message: message })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide loading indicator
+            loadingIndicator.style.display = "none";
+
+            // Append bot response
+            let botMessage = `<div class="d-flex justify-content-start mb-2">
+                                <div class="p-2 rounded bg-light text-dark" style="max-width: 70%;">
+                                    <strong>Bot:</strong> ${data.response}
+                                </div>
+                              </div>`;
+            chatBox.innerHTML += botMessage;
+            chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll
+        })
+        .catch(error => {
+            let errorMessage = `<div class="d-flex justify-content-start mb-2 text-danger">
+                                  <div class="p-2 rounded bg-light text-dark" style="max-width: 70%;">
+                                      <strong>Bot:</strong> Sorry, an error occurred.
+                                  </div>
+                                </div>`;
+            chatBox.innerHTML += errorMessage;
+            loadingIndicator.style.display = "none";
+        });
     });
 
-    // CSRF Token Helper Function
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            let cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                let cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
+    // Allow sending message on pressing Enter
+    document.getElementById("chat-input").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            document.getElementById("send-btn").click();
         }
-        return cookieValue;
-    }
+    });
 </script>
+
+
 
 
 
