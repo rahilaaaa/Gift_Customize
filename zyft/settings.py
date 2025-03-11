@@ -33,6 +33,7 @@ load_dotenv()
 # Use the SECRET_KEY from .env
 SECRET_KEY = os.getenv('SECRET_KEY')
 
+print("######## settings.py is loaded ########")
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
