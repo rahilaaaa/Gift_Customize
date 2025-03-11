@@ -43,7 +43,8 @@ print("######## settings.py is loaded ########")
 DEBUG = True
 
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['51.21.88.43', 'localhost', '127.0.0.1']
+
 
 
 
