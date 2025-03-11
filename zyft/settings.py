@@ -11,35 +11,35 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import environ
 import os
-from decouple import config
-import environ
-from dotenv import load_dotenv
-import environ
-
-
 
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Initialize environment variables once
+env = environ.Env()
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 # Load environment variables
-load_dotenv()
 
-# Use the SECRET_KEY from .env
-SECRET_KEY = os.getenv('SECRET_KEY')
 
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = env('SECRET_KEY')
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
 
 
+
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DEBUG', default=True)
 
 ALLOWED_HOSTS = []
 
@@ -187,10 +187,9 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Initialize environment variables
-env = environ.Env()
-environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
+
+# Email
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = env("EMAIL_HOST")
 EMAIL_PORT = env.int("EMAIL_PORT")
@@ -254,8 +253,8 @@ SOCIALACCOUNT_PROVIDERS = {
             'access_type': 'online',
         },
         'APP': {
-            'client_id': config('GOOGLE_CLIENT_ID'),
-            'secret': config('GOOGLE_CLIENT_SECRET'),
+            'client_id': env('GOOGLE_CLIENT_ID'),
+            'secret': env('GOOGLE_CLIENT_SECRET'),
             'key': '',
         },
     },
@@ -278,25 +277,22 @@ SOCIALACCOUNT_PROVIDERS = {
         'VERIFIED_EMAIL': False,
         'VERSION': 'v12.0',
         'APP': {
-            'client_id': config('FACEBOOK_CLIENT_ID'),
-            'secret': config('FACEBOOK_CLIENT_SECRET'),
+            'client_id': env('FACEBOOK_CLIENT_ID'),
+            'secret': env('FACEBOOK_CLIENT_SECRET'),
             'key': ''
         }
     }
 
 }
 
+# PayPal
+PAYPAL_CLIENT_ID = env("PAYPAL_CLIENT_ID")
+PAYPAL_CLIENT_SECRET = env("PAYPAL_CLIENT_SECRET")
+PAYPAL_MODE = env("PAYPAL_MODE", default="sandbox")
 
-PAYPAL_CLIENT_ID = config("PAYPAL_CLIENT_ID")
-PAYPAL_CLIENT_SECRET = config("PAYPAL_CLIENT_SECRET")
-PAYPAL_MODE = config("PAYPAL_MODE", default="sandbox")  # Defaults to sandbox if not set
-
-
-
-RAZORPAY_KEY_ID = config('RAZORPAY_KEY_ID')
-RAZORPAY_KEY_SECRET = config('RAZORPAY_KEY_SECRET')
-
-
+# Razorpay
+RAZORPAY_KEY_ID = env('RAZORPAY_KEY_ID')
+RAZORPAY_KEY_SECRET = env('RAZORPAY_KEY_SECRET')
 
 
 
