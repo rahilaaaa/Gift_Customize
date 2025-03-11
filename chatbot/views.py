@@ -7,6 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from .models import ChatMessage
 from django.shortcuts import render
+from products.models import Product
 from dotenv import load_dotenv
 
 
@@ -66,3 +67,30 @@ def chatbot_view(request):
 
     # If the request method is GET, render the chatbot HTML page
     return render(request, "chatbot/chat.html", {"chats": ChatMessage.objects.filter(user=request.user)})
+
+
+
+
+# @csrf_exempt
+# def dialogflow_webhook(request):
+#     """Handles Dialogflow webhook requests."""
+#     try:
+#         data = json.loads(request.body)
+#         intent_name = data["queryResult"]["intent"]["displayName"]
+
+#         if intent_name == "product_inquiry":
+#             response_text = get_product_list()  # Fetch from DB
+#         else:
+#             response_text = "I'm not sure how to help with that."
+
+#         return JsonResponse({"fulfillmentText": response_text})
+
+#     except Exception as e:
+#         return JsonResponse({"fulfillmentText": "Sorry, an error occurred."})
+
+# def get_product_list():
+#     """Fetches product categories from the database."""
+#     products = Product.objects.values_list("category", flat=True).distinct()
+#     product_list = ", ".join(products)
+#     return f"We offer the following products: {product_list}."
+
