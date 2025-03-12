@@ -176,9 +176,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-STATICFILES_DIRS = [
-    BASE_DIR / "static",  # Your static folder path
-]
+
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Default session engine
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
