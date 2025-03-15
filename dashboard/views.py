@@ -3,6 +3,9 @@ from products.models import Product, ProductVariant, ProductImage,Review,Coupon
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import authenticate, login as auth_login, logout
 from datetime import datetime
+from django.core.files.base import ContentFile
+import base64
+from django.core.files.uploadedfile import InMemoryUploadedFile
 import json
 from django.contrib.auth import get_user_model
 from django.views.decorators.cache import never_cache
@@ -37,9 +40,12 @@ import io
 import logging
 import os
 from django.core.paginator import Paginator
+from django.core.exceptions import ObjectDoesNotExist
 from users.models import Wallet
 from django.core.exceptions import ValidationError
 from dashboard.decorators import admin_required
+
+
 logger = logging.getLogger(__name__)
 
 # Function to check if a user is a superuser
@@ -76,7 +82,6 @@ def login_admin(request):
 
 
 
-
 @login_required(login_url='logout_admin')
 @user_passes_test(is_superuser, login_url='logout_admin')
 def admin(request):
@@ -107,11 +112,53 @@ def admin(request):
     end_date = make_aware(datetime.combine(end_date, datetime.max.time()))
 
     # Filter orders based on date range
-    orders = Order.objects.filter(created_at__range=[start_date, end_date])
+    orders = Order.objects.filter(created_at__range=[start_date, end_date]).order_by('-created_at')
+
 
     # Compute total sales
     total_sales_count = orders.count()
     total_order_amount = orders.aggregate(Sum('total_price'))['total_price__sum'] or 0
+
+      # Compute discount per order (Coupon + Offer)
+    for order in orders:
+        order_items = OrderItem.objects.filter(order=order)
+
+        coupon_discount = order_items.filter(coupon__isnull=False).annotate(
+            discount_applied=Case(
+                When(coupon__discount_type='percent', then=F('price') * F('coupon__discount_value') / 100),
+                When(coupon__discount_type='fixed', then=F('coupon__discount_value')),
+                default=0,
+                output_field=DecimalField()
+            )
+        ).aggregate(total_coupon_discount=Sum('discount_applied'))['total_coupon_discount'] or 0
+
+        offer_discount = 0
+        for item in order_items:
+            product = item.product
+            product_offer = Offer.objects.filter(
+                content_type=ContentType.objects.get_for_model(product),
+                object_id=product.id,
+                status='active'
+            ).first()
+
+            category_offer = Offer.objects.filter(
+                content_type=ContentType.objects.get_for_model(product.category),
+                object_id=product.category.id,
+                status='active'
+            ).first()
+
+            highest_discount = 0
+            if product_offer:
+                highest_discount = max(highest_discount, product_offer.offer_percentage)
+            if category_offer:
+                highest_discount = max(highest_discount, category_offer.offer_percentage)
+
+            if highest_discount > 0:
+                offer_discount += (item.price * highest_discount / 100) * item.quantity
+
+        # Save total discount in the order
+        order.total_discount = coupon_discount + offer_discount
+        order.save()  # Save to the database
 
     # Sales data for chart
     sales_data = orders.annotate(date=TruncDate('created_at')).values('date').annotate(
@@ -122,17 +169,23 @@ def admin(request):
     dates = [entry['date'].strftime('%Y-%m-%d') for entry in sales_data]
     total_sales = [entry['total_sales'] for entry in sales_data]
     revenue = [float(entry['revenue']) for entry in sales_data]
+    # Compute overall discount
+    total_discount = sum(order.total_discount for order in orders)
 
     # Pass data to template
     context = {
         "orders": orders,
         "total_sales_count": total_sales_count,
+        "total_discount": total_discount,
         "total_order_amount": total_order_amount,
         "sales_dates": json.dumps(dates),
         "sales_counts": json.dumps(total_sales),
         "sales_revenue": json.dumps(revenue),
     }
-    return render(request, 'admin/index.html', context)
+    return render(request, 'admin/index.html', context) 
+
+
+
 
 # def export_orders_excel(request):
 #     """Export filtered orders as an Excel file."""
@@ -199,7 +252,8 @@ def products(request):
     selected_date = request.GET.get('date', None)  # Get selected date if provided
     
     # Fetch products based on the selected category
-    products = Product.objects.prefetch_related('images')
+    products = Product.objects.prefetch_related('images').filter(is_active=True)
+
     
     if selected_category != 'all':
         # Use the actual category object for filtering
@@ -234,141 +288,158 @@ def products(request):
 
 
 
-def edit_product(request, product_id): 
+def edit_product(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    
+    product_images = ProductImage.objects.filter(product=product)
+    product_variants = ProductVariant.objects.filter(product=product)
+
     if request.method == 'POST':
+        # Retrieve form data
+        title = request.POST.get('title')
+        priority = request.POST.get('priority')
+        description = request.POST.get('description')
+        price = request.POST.get('price')
+        category_name = request.POST.get('product_category')
+
+        # Validate required fields
+        required_fields = {
+            'Title': title,
+            'Priority': priority,
+            'Description': description,
+            'Price': price,
+            'Product Category': category_name,
+        }
+
+        missing_fields = [field for field, value in required_fields.items() if not value]
+        if missing_fields:
+            for field in missing_fields:
+                messages.error(request, f"{field} is required.")
+            return redirect('edit_product', product_id=product_id)
+
+        # Validate price is a positive integer
         try:
-            with transaction.atomic():
-                # Validate required fields
-                required_fields = {
-                    'title': request.POST.get('title'),
-                    'priority': request.POST.get('priority'),
-                    'description': request.POST.get('description'),
-                    'price': request.POST.get('price'),
-                }
+            price = float(price)
+            if price <= 0:
+                raise ValueError("Price must be a positive number.")
+        except ValueError as e:
+            messages.error(request, f"Invalid price: {str(e)}")
+            return redirect('edit_product', product_id=product_id)
 
-                # Check for missing required fields
-                missing_fields = [field for field, value in required_fields.items() if not value]
-                if missing_fields:
-                    for field in missing_fields:
-                        messages.error(request, f"{field.title()} is required and cannot be empty.")
-                    return redirect('edit_product', product_id=product_id)
+        # Validate priority is one of the allowed choices
+        if priority not in [Product.LOW, Product.MEDIUM, Product.HIGH]:
+            messages.error(request, "Invalid priority value.")
+            return redirect('edit_product', product_id=product_id)
 
-                # Validate price is a positive integer
-                try:
-                    price = float(required_fields['price'])
-                    if price < 0:
-                        messages.error(request, "Price must be a positive integer.")
+        # Check if new images are uploaded
+        new_images = [request.FILES.get(f'image{i}') for i in range(1, 4)]
+        has_new_images = any(new_images)
+
+        # If new images are uploaded, validate and process them
+        if has_new_images:
+            for i, image in enumerate(new_images, start=1):
+                if image:  # Only process if a new image is uploaded
+                    try:
+                        img = Image.open(image)
+                        if img.format not in ['JPEG', 'PNG']:
+                            raise ValueError("Invalid image format. Only JPEG and PNG are allowed.")
+                        
+                        width, height = img.size
+                        if width > 800 or height > 800:  # Resize if dimensions exceed 800x800
+                            img.thumbnail((800, 800))
+                            buffer = BytesIO()
+                            img.save(buffer, format='JPEG')
+                            image.file = InMemoryUploadedFile(
+                                buffer, None, image.name, 'image/jpeg', buffer.getbuffer().nbytes, None
+                            )
+
+                        # Update the corresponding product image
+                        product_image = product_images[i-1] if i <= len(product_images) else ProductImage(product=product)
+                        product_image.image = image
+                        product_image.save()
+                    except Exception as e:
+                        messages.error(request, f"Invalid image file for image {i}: {str(e)}")
                         return redirect('edit_product', product_id=product_id)
-                except ValueError:
-                    messages.error(request, "Price must be a valid integer.")
-                    return redirect('edit_product', product_id=product_id)
 
-                # Update product fields
-                product.title = required_fields['title']
-                product.priority = required_fields['priority']
-                product.description = required_fields['description']
-                product.price = price  # Use the validated price
-                product.save()
+        # Get the Category instance
+        try:
+            category = Category.objects.get(name=category_name)
+        except Category.DoesNotExist:
+            messages.error(request, f"Category '{category_name}' not found.")
+            return redirect('edit_product', product_id=product_id)
 
-                # Handle image updates
-                for i in range(1, 4):
-                    image = request.FILES.get(f'image{i}')
-                    if image:
-                        # Validate image file type
-                        if not image.name.lower().endswith(('.png', '.jpg', '.jpeg')):
-                            messages.error(request, "Invalid image format. Only PNG, JPG, and JPEG are allowed.")
-                            return redirect('edit_product', product_id=product_id)
-
-                        # Update or create images
-                        try:
-                            product_image = product.images.all()[i-1]  # Get existing image by index
-                            product_image.image.delete(save=False)  # Delete old file
-                            product_image.image = image
-                            product_image.save()
-                        except IndexError:
-                            ProductImage.objects.create(product=product, image=image)
-
-                # Handle variants
-                variants = list(product.variants.all())
-                
-                for i in range(1, 4):
-                    color = request.POST.get(f'color{i}')
-                    size = request.POST.get(f'size{i}')
-                    liter = request.POST.get(f'liter{i}')
-                    quantity = request.POST.get(f'quantity{i}')
-                    charm = request.POST.get(f'charm{i}')
-                    charm_img = request.FILES.get(f'charmImg{i}')
-                    view_flex = request.POST.get(f'viewFlex{i}')
-
-                    # Check if variant fields are required based on category
-                    if product.category.name.lower() == "wallet":
-                        if not color:
-                            messages.error(request, f"Color for variant {i} is required and cannot be empty.")
-                            return redirect('edit_product', product_id=product_id)
-                    elif product.category.name.lower() == "3d_crystal":
-                        if not size:
-                            messages.error(request, f"Size for variant {i} is required and cannot be empty.")
-                            return redirect('edit_product', product_id=product_id)
-
-                    # Only process variants with valid data
-                    if any([color, size, liter, charm, charm_img, view_flex]) and quantity:
-                        try:
-                            # Get existing variant or create new
-                            variant = variants[i-1] if i-1 < len(variants) else ProductVariant(product=product)
-                            
-                            # Validate quantity
-                            try:
-                                variant.quantity = int(quantity)
-                            except ValueError:
-                                messages.error(request, f"Quantity for variant {i} must be a valid number.")
-                                return redirect('edit_product', product_id=product_id)
-
-                            # Update fields based on category
-                            if product.category.name.lower() == "wallet":
-                                variant.color = color or None
-                                variant.size = None
-                                variant.liter = None
-                                variant.charm = charm or None
-                                variant.charm_img = charm_img or None
-                            elif product.category.name.lower() == "3d_crystal":
-                                variant.size = size or None
-                                variant.color = None
-                                variant.liter = None
-                                variant.view_flex = view_flex or None
-
-                            # Log the variant fields before saving
-                            logger.info(f"Updating variant {i} with fields: {variant.__dict__}")
-
-                            variant.save()
-                        except Exception as e:
-                            messages.error(request, f"Error saving variant {i}: {str(e)}")
-                            return redirect('edit_product', product_id=product_id)
-
-                messages.success(request, "Product updated successfully.")
-                return redirect('products')
-
+        # Update the Product instance
+        try:
+            product.title = title
+            product.description = description
+            product.priority = priority
+            product.price = price
+            product.category = category
+            product.save()
         except Exception as e:
             messages.error(request, f"Error updating product: {str(e)}")
             return redirect('edit_product', product_id=product_id)
 
-    # Filter variants based on category
-    variants = product.variants.all()
-    context = {
+        # Update variants with size, color, liter, and viewflex
+        for i in range(1, 4):  # Assuming a maximum of 3 variants
+            color = request.POST.get(f'color{i}')
+            size = request.POST.get(f'size{i}')
+            liter = request.POST.get(f'liter{i}')
+            quantity = request.POST.get(f'quantity{i}')
+            charm = request.POST.get(f'charm{i}')
+            charm_img = request.FILES.get(f'charmImg{i}')
+            viewflex = request.POST.get(f'viewflex{i}')
+
+            # Only update variant if required fields are present
+            if (color or size or liter) and quantity:
+                try:
+                    quantity = int(quantity)
+                    if quantity < 0:
+                        raise ValueError("Quantity must be a non-negative integer.")
+
+                    # Get or create variant
+                    variant = product_variants[i-1] if i <= len(product_variants) else ProductVariant(product=product)
+                    variant.color = color
+                    variant.size = size
+                    variant.liter = liter
+                    variant.quantity = quantity
+                    variant.charm = charm
+                    variant.charmImg = charm_img
+                    variant.viewflex = viewflex
+
+                    # Apply category-specific rules
+                    if category.name.lower() == "wallet":
+                        variant.size = None
+                        variant.liter = None
+                    elif category.name.lower() == "3d_crystal":
+                        variant.color = None
+                        variant.liter = None
+                        variant.charm = None
+                        variant.charmImg = None
+
+                    variant.save()
+                except ValueError as ve:
+                    messages.error(request, f"Invalid quantity for variant {i}: {str(ve)}")
+                except Exception as e:
+                    logger.error(f"Error updating variant {i}: {str(e)}")
+                    messages.error(request, f"Error updating variant {i}: {str(e)}")
+
+        messages.success(request, "Product updated successfully.")
+        return redirect('edit_product', product_id=product_id)
+
+    # Render the edit product form with existing data
+    return render(request, 'admin/product/edit_product.html', {
         'product': product,
-        'images': product.images.all(),
-        'variants': variants,
-        'category': product.category,
-    }
-    return render(request, 'admin/product/edit_product.html', context)
+        'product_images': product_images,
+        'product_variants': product_variants,
+    })
+
 
 def delete_product(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    product.delete()
-    messages.success(request, f"Product '{product.title}' has been deleted successfully.")
-    return redirect('products')  # Redirect to the product list page
-
+    product.is_active = False  # Soft delete
+    product.save()
+    messages.success(request, f"Product '{product.title}' has been removed successfully.")
+    return redirect('products')  # Redirect to product list
 
 @user_passes_test(is_superuser, login_url='login_admin')
 def add_products(request):
@@ -493,7 +564,9 @@ def add_products(request):
         messages.success(request, "Product added successfully.")
         return redirect('add_products')
 
-    return render(request, 'admin/product/add_products.html')
+    return render(request, 'admin/product/add_products.html')  
+
+
 
 
 def orders_list(request):
@@ -560,7 +633,14 @@ def order_details(request, order_id):
 
             if action == 'approve':
                 item.approve_return()
-                messages.success(request, f"Return approved for {item.product.title}.")
+                # Refund the price of the approved item to the wallet
+                try:
+                    wallet, created = Wallet.objects.get_or_create(user=order.customer)
+                    wallet.add_funds(item.price)
+                    messages.success(request, f"Return approved for {item.product.title}. ₹{item.price} refunded to user's wallet.")
+                except ValidationError as e:
+                    messages.error(request, f"Error updating wallet: {str(e)}")
+                    
             elif action == 'reject':
                 item.reject_return()
                 messages.error(request, f"Return rejected for {item.product.title}.")
@@ -574,9 +654,11 @@ def order_details(request, order_id):
         'order_items': order_items,
     })
 
+
+
 @never_cache
 def coupon(request):
-    coupons = Coupon.objects.all().order_by('-valid_from')  # Fetch all coupons, ordered by validity
+    coupons = Coupon.objects.all().order_by('-valid_from') # Fetch all coupons, ordered by validity
     return render(request, 'admin/coupon/coupon.html', {'coupons': coupons})
 
 @never_cache
@@ -635,7 +717,8 @@ def edit_coupon(request, coupon_id):
 @never_cache
 def delete_coupon(request, coupon_id):
     coupon = get_object_or_404(Coupon, id=coupon_id)
-    coupon.delete()
+    coupon.is_deleted = True
+    coupon.save()
     messages.success(request, 'Coupon deleted successfully!')
     return redirect('coupon')
 
@@ -697,8 +780,8 @@ def edit_offers(request, offer_id):
         else:
             try:
                 percentage = float(offer_percentage)
-                if not (0 < percentage <= 100):
-                    errors['percentage'] = 'Percentage must be between 0.01 and 100'
+                if not (0 < percentage <= 80):
+                    errors['percentage'] = 'Percentage must be between 0.01 and 80'
             except ValueError:
                 errors['percentage'] = 'Invalid percentage value'
 
@@ -760,8 +843,8 @@ def create_category_offers(request):
         else:
             try:
                 offer_percentage = Decimal(offer_percentage)
-                if offer_percentage <= 0 or offer_percentage > 100:
-                    errors['percentage'] = 'Percentage must be between 0 and 100'
+                if offer_percentage <= 0 or offer_percentage > 80:
+                    errors['percentage'] = 'Percentage must be between 0 and 80'
             except:
                 errors['percentage'] = 'Invalid percentage value'
 
@@ -847,8 +930,8 @@ def create_product_offers(request):
         else:
             try:
                 percentage = Decimal(form_data['offer_percentage'])
-                if not (0 < percentage <= 100):
-                    errors['percentage'] = 'Percentage must be between 0.01 and 100'
+                if not (0 < percentage <= 80):
+                    errors['percentage'] = 'Percentage must be between 0.01 and 80'
             except InvalidOperation:
                 errors['percentage'] = 'Invalid percentage value'
 

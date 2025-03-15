@@ -44,6 +44,7 @@ DEBUG = env.bool('DEBUG', default=True)
 ALLOWED_HOSTS = []
 
 
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -170,12 +171,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+# Where to collect static files for production
+STATIC_ROOT = BASE_DIR / "static"  # Serve this with Nginx/Apache in production
+
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# Development static files source
 STATICFILES_DIRS = [
-    BASE_DIR / "static",  # Your static folder path
+    BASE_DIR / "static_files",  # Example: contains development CSS, JS
 ]
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Default session engine

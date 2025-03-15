@@ -84,6 +84,12 @@ class Order(models.Model):
         self.status = self.PAYMENT_FAILED
         self.payment_status = "Failed"
         self.save()
+    
+    def save(self, *args, **kwargs):
+        # Check if the status is being updated to 'Delivered'
+        if self.status == self.DELIVERED and self.payment_status != "Paid":
+            self.payment_status = "Paid"
+        super().save(*args, **kwargs)
 
 
 

@@ -23,7 +23,9 @@ from orders.models import Cart,Order,Wishlist,OrderItem
 from django.contrib.auth.decorators import login_required
 from .forms import EditAccountForm
 from django.http import JsonResponse
+from decimal import Decimal
 from django.db import transaction
+from django.core.exceptions import ObjectDoesNotExist
 
 # Generate a 4-digit OTP
 def generate_otp():
@@ -273,7 +275,7 @@ def reset_password(request, uidb64, token):
 
 
 def profile(request):
-    addresses = Address.objects.filter(user=request.user)
+    addresses = Address.objects.filter(user=request.user, is_active=True)
     form = AddressForm()
     if request.user.is_authenticated:
         cart = Cart.objects.filter(customer=request.user).first()
@@ -391,13 +393,13 @@ def edit_address(request, pk):
     return render(request, 'users/profile/address/edit_address.html', {'form': form})
 
 def delete_address(request, pk):
-    address = get_object_or_404(Address, pk=pk)
+    address = get_object_or_404(Address, pk=pk, user=request.user)  # Optional: ensure user owns the address
     if request.method == 'POST':
-        address.delete()
-        messages.success(request, 'Address deleted successfully.')
-        return redirect('profile')
+        address.is_active = False  # Soft delete
+        address.save()
+        messages.success(request, 'Address removed successfully.')
+        return redirect('profile')  # Redirect to profile or wherever you need
     return render(request, 'users/profile/address/delete_address_confirm.html', {'address': address})
-
 
 # @login_required
 # def my_orders(request):
@@ -407,15 +409,33 @@ def delete_address(request, pk):
 
 
 
-@login_required
 def cancel_order(request, order_id):
     order = get_object_or_404(Order, id=order_id, customer=request.user)
+    
     if order.status == Order.PENDING:
         order.cancel_order()
-        messages.success(request, 'Order has been cancelled successfully.')
+        
+        # If payment is completed, refund 80% of total price
+        if order.payment_status.lower() == "paid":
+            refund_amount = (order.total_price * Decimal('0.80')).quantize(Decimal('0.01'))  # 80% refund rounded to 2 decimals
+            try:
+                wallet = request.user.wallet  # Access user's wallet
+            except ObjectDoesNotExist:
+                # If wallet doesn't exist, create one with Decimal('0.00') to avoid float issue
+                wallet = Wallet.objects.create(user=request.user, balance=Decimal('0.00'))
+            
+            wallet.add_funds(refund_amount)  # Add refund amount to wallet
+            messages.success(request, f'Order cancelled. ₹{refund_amount} has been added to your wallet.')
+        else:
+            messages.success(request, 'Order has been cancelled successfully. Payment was not completed, so no refund issued.')
     else:
         messages.error(request, 'Only pending orders can be cancelled.')
+
     return redirect('profile')
+
+
+
+
 
 def return_order(request, order_id):
     order = get_object_or_404(Order, id=order_id)

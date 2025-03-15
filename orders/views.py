@@ -515,15 +515,24 @@ def checkout(request):
 
     active_coupons = []
     if meets_minimum_purchase:
-        active_coupons = Coupon.objects.filter(active=True, valid_from__lte=datetime.now(), valid_to__gte=datetime.now())
-
+        used_coupons = CouponUsage.objects.filter(user=request.user).values_list('coupon_id', flat=True)
+    
+        # Fetch active coupons excluding the used ones
+        active_coupons = Coupon.objects.filter(
+            active=True,
+            valid_from__lte=datetime.now(),
+            valid_to__gte=datetime.now()
+        ).exclude(id__in=used_coupons)
     # Fetch user addresses dynamically
-    user_addresses = Address.objects.filter(user=request.user)
+    user_addresses = Address.objects.filter(user=request.user, is_active=True)
     if request.user.is_authenticated:
         cart = Cart.objects.filter(customer=request.user).first()
         cart_count = cart.items.count() if cart else 0
+        wishlist = Wishlist.objects.filter(user=request.user).first()
+        wishlist_count = wishlist.items.count() if wishlist else 0
     else:
         cart_count = 0
+        whishlist_count = 0
 
     return render(request, 'orders/checkout/checkout.html', {
         'cart_items': cart_items if not order else [],  # No cart items for retry payment
@@ -533,6 +542,7 @@ def checkout(request):
         'discount_amount': Decimal('0.00') if order else Decimal(request.session.get('coupon_discount', 0)),  # No discount for retry payment
         'user_addresses': user_addresses,  # Pass addresses to template
         'cart_count': cart_count,  # Add cart count to context
+        'wishlist_count': wishlist_count,  # Add wishlist count to context
         'active_coupons': active_coupons,  # Add active coupons to context
         'meets_minimum_purchase': meets_minimum_purchase,  # Add minimum purchase status to context
         'order': order,  # Pass the failed order to the template
@@ -621,8 +631,14 @@ def place_order(request):
                     # messages.error(request, "Payment failed. Please try again.")
                     return redirect("payment_failed", order_id=order.id)
                 else:
+                    
+                    # ✅ Handle COD and prepaid (wallet, online) payment status
+                    if payment_method == 'cod':
+                        order.payment_status = "Pending"  # COD orders are unpaid at this stage
+                    else:
+                        order.payment_status = "Paid"  # Prepaid (wallet/online) marked as paid
+
                     order.status = Order.PENDING
-                    order.payment_status = "Paid"
                     order.save()
                     messages.success(request, "Order placed successfully!")
                     return redirect("order_confirmation", order_id=order.id)

@@ -149,7 +149,11 @@
         {% endif %}
     </div>
 </div>
+<!-- Include SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
+<!-- Include SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <style>
     .product-info {
         text-align: left;
@@ -253,9 +257,24 @@
         removeButtons.forEach(button => {
             button.addEventListener('click', function(event) {
                 // Prevent the default action (following the link)
-                if (!confirm('Are you sure you want to remove this item?')) {
-                    event.preventDefault();
-                }
+                event.preventDefault();
+    
+                // Show SweetAlert2 confirmation dialog
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'Do you really want to remove this item?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, remove it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // If confirmed, proceed with the link
+                        window.location.href = button.href;
+                    }
+                });
             });
         });
     });

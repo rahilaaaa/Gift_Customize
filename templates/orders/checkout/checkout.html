@@ -59,13 +59,14 @@
                         </div>
                     </div>
                     <br>
-                    {% if meets_minimum_purchase %}
+                    {% if meets_minimum_purchase and active_coupons %}
                         <div class="input-group">
                             <div class="input-group-append">
                                 <button class="btn btn-secondary" type="button" onclick="toggleCoupons()">Show Coupons</button>
                             </div>
                         </div>
                     {% endif %}
+
                 </form>
 
                 <div id="couponsSection" class="card border-secondary mb-5" style="display: none;">

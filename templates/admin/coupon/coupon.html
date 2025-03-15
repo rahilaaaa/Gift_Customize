@@ -86,9 +86,9 @@
                                       <a href="{% url 'edit_coupon' coupon.id %}" class="btn btn-sm btn-primary">Edit</a>
                                       
                                   </td>
-                                  <td>
+                                  {% comment %} <td>
                                     <a href="{% url 'delete_coupon' coupon.id %}" class="btn btn-sm btn-danger">Delete</a>
-                                  </td>
+                                  </td> {% endcomment %}
                               </tr>
                               {% empty %}
                               <tr>

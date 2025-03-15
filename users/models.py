@@ -73,6 +73,8 @@ class ReferralOffer(models.Model):
             return self.start_date <= now <= self.end_date
         return self.start_date <= now
     
+
+
 class Referral(models.Model):
     user = models.OneToOneField(Customer, on_delete=models.CASCADE, related_name='referral')
     code = models.CharField(max_length=10, unique=True)  # Referral code
@@ -89,6 +91,8 @@ class Referral(models.Model):
         code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
         return code
     
+
+
 class Wallet(models.Model):
     """
     Wallet model to store the balance for each user.
@@ -130,6 +134,7 @@ class Wallet(models.Model):
         self.balance -= amount
         self.save()
 
+
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
     otp = models.CharField(max_length=128, blank=True, null=True)  # Store hashed OTP
@@ -167,6 +172,7 @@ class Address(models.Model):
     pincode = models.CharField(max_length=20, verbose_name="Pincode", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")
+    is_active = models.BooleanField(default=True)  # Mark active/inactive
 
     def __str__(self):
         return f"{self.name}'s Address - {self.city}, {self.state}, {self.country}"

@@ -39,7 +39,7 @@ class Product(models.Model):
     # Change the category to a ForeignKey to Category model
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Category")
     default_variant = models.ForeignKey('ProductVariant', null=True, blank=True, on_delete=models.SET_NULL, related_name="default_for_product", verbose_name="Default Variant")
-
+    is_active = models.BooleanField(default=True)  # Soft delete flag
 
     created_at = models.DateTimeField(default=timezone.now, verbose_name="Created At")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")
@@ -176,6 +176,7 @@ class Coupon(models.Model):
     active = models.BooleanField(default=True, verbose_name="Active")
     max_uses = models.PositiveIntegerField(default=1, verbose_name="Maximum Uses")
     total_uses = models.PositiveIntegerField(default=0, verbose_name="Total Uses")
+    is_deleted = models.BooleanField(default=False, verbose_name="Deleted")
     
     # Relationships with Product and Category
     products = models.ManyToManyField(
@@ -205,7 +206,7 @@ class Coupon(models.Model):
 
 
     def save(self, *args, **kwargs):
-        self.code = self.code.lower()  # Convert code to lowercase before saving
+        self.code = self.code.upper()  # Convert code to lowercase before saving
         super().save(*args, **kwargs)
 
     def __str__(self):

@@ -16,7 +16,7 @@ from users.decorators import user_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 @login_required(login_url='login_user')
 def home(request):
-    high_priority_products = Product.objects.filter(priority='high').order_by('-id')
+    high_priority_products = Product.objects.filter(priority='high',  is_active=True).order_by('-id')
     products_with_images, page_obj = get_paginated_products(request, high_priority_products, per_page=8)
 
     cart_count = 0
@@ -99,6 +99,7 @@ def product_details(request, pk):
     # Fetch related products of the same category
     related_products = Product.objects.filter(
         category=product.category,
+        is_active=True  # Only active products
     ).exclude(id=product.id)
 
     # Add the first image for each related product
@@ -215,13 +216,12 @@ def shop(request):
     sort_by = request.GET.get('sort', 'latest')  # Default to 'latest' if no sort is selected
     search_query = request.GET.get('search', '')  # Capture search term from the query parameters
 
-    # Filter products by selected category
+    # Filter products by category and is_active
     if selected_category == 'all':
-        products = Product.objects.all()
+        products = Product.objects.filter(is_active=True)
     else:
         category = get_object_or_404(Category, name=selected_category)
-        products = Product.objects.filter(category=category)
-
+        products = Product.objects.filter(category=category, is_active=True)
     # Apply search filter if there is a search query
     if search_query:
         products = products.filter(title__icontains=search_query)  # Filter by product name

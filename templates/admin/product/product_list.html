@@ -100,11 +100,12 @@
                             <div class="col-lg-2 col-sm-2 col-4 col-price"> 
                                 <span>${{ product.price }}</span> 
                             </div>
-                            <div class="col-lg-2 col-sm-2 col-4 col-status">      
-                                <span class="badge rounded-pill alert-success">Active</span>   
-                            </div>
+                      
                             <div class="col-lg-1 col-sm-2 col-4 col-date">
                                 <span>{{ product.created_at|date:"d.m.Y" }}</span>
+                            </div>
+                            <div class="col-lg-2 col-sm-2 col-4 col-status">      
+                                <span class="badge rounded-pill alert-success">Active</span>   
                             </div>
                             <div class="col-lg-2 col-sm-2 col-4 col-action text-end">
                                 <div class="action-buttons d-flex justify-content-end">
@@ -116,7 +117,7 @@
                                     <!-- Delete Button -->
                                     <a href="{% url 'delete_product' product.id %}" class="btn btn-sm font-sm btn-light rounded" onclick="return confirm('Are you sure you want to delete this product?');">
                                         <i class="material-icons md-delete_forever"></i> Delete
-                                    </a>
+                                    </a> 
                                 </div>
                             </div>
                         </div> <!-- row .// -->
@@ -142,9 +143,13 @@
         </footer>
     </main>
 
-    {% block scripts %}
+    
+        {% block scripts %}
         {% include "admin/scripts.html" %}
-    {% endblock scripts %}
+   
+   
+   
+        {% endblock scripts %}
    
 </body>
 

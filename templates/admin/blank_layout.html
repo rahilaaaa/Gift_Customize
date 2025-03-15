@@ -146,10 +146,10 @@
                                         {% for order in orders %}
                                     <tr>
                                         <td style="border: 1px solid black;"><a href="#" class="fw-bold">#{{ order.id }}</a></td>
-                                        <td style="border: 1px solid black;">{{ order.created_at|date:"d M, Y" }}</td>
                                         <td style="border: 1px solid black;">{{ order.customer.username }}</td>
+                                        <td style="border: 1px solid black;">{{ order.created_at|date:"d M, Y" }}</td>
                                         <td style="border: 1px solid black;">₹{{ order.total_price|floatformat:0 }}</td>
-                                        <td style="border: 1px solid black;">₹{{ order.total_discount|floatformat:0 }}</td>
+                                        <td style="border: 1px solid black;">₹{{ order.total_discount|floatformat:0}}</td>
                                         <td style="border: 1px solid black;">
                                             <span class="badge rounded-pill {% if order.payment_status == 'Paid' %}alert-success{% else %}alert-danger{% endif %}">
                                                 {{ order.payment_status }}
