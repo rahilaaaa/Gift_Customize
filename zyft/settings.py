@@ -37,11 +37,18 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: keep the secret key used in production secret!
 
 
+<<<<<<< HEAD
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = env.bool('DEBUG', default=True)
+=======
+>>>>>>> 62b3e00e0980c6489f5d5b175444a377d77814bc
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool('DEBUG', default=True)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['51.21.88.43', 'localhost', '127.0.0.1']
+
 
 
 
@@ -170,18 +177,30 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
+<<<<<<< HEAD
 STATIC_URL = 'static/'
 # Where to collect static files for production
 STATIC_ROOT = BASE_DIR / "static"  # Serve this with Nginx/Apache in production
 
+=======
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+>>>>>>> 62b3e00e0980c6489f5d5b175444a377d77814bc
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Development static files source
 STATICFILES_DIRS = [
+<<<<<<< HEAD
     BASE_DIR / "static_files",  # Example: contains development CSS, JS
+=======
+    os.path.join(BASE_DIR, 'staticfiles'),  # ✅ Correct because it does NOT conflict with STATIC_ROOT
+>>>>>>> 62b3e00e0980c6489f5d5b175444a377d77814bc
 ]
+
+
+
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Default session engine
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
