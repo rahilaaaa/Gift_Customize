@@ -179,17 +179,14 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # This is where collected static files will go (for production)
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# This is for extra static files used in development (optional)
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),  # Where your development static files are kept
-]
-
-
+     os.path.join(BASE_DIR, 'staticfiles'),  # ✅ Correct because it does NOT conflict with STATIC_ROOT
+ ]
 
 
 
