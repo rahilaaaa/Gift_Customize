@@ -424,7 +424,7 @@ def edit_product(request, product_id):
                     messages.error(request, f"Error updating variant {i}: {str(e)}")
 
         messages.success(request, "Product updated successfully.")
-        return redirect('edit_product', product_id=product_id)
+        return redirect('products')
 
     # Render the edit product form with existing data
     return render(request, 'admin/product/edit_product.html', {
